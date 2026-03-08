@@ -1,0 +1,30 @@
+syntax = "proto3";
+
+package encryption;
+
+option cc_generic_services = false;
+
+service EncryptionService {
+  rpc Encrypt(EncryptRequest) returns (EncryptResponse);
+  rpc Decrypt(DecryptRequest) returns (DecryptResponse);
+}
+
+message EncryptRequest {
+  string plaintext = 1;
+}
+
+message EncryptResponse {
+  string ciphertext = 1;  // base64-encoded
+  string iv = 2;          // base64-encoded 12-byte IV
+  string auth_tag = 3;    // base64-encoded 16-byte GCM authentication tag
+}
+
+message DecryptRequest {
+  string ciphertext = 1;  // base64-encoded
+  string iv = 2;          // base64-encoded
+  string auth_tag = 3;    // base64-encoded
+}
+
+message DecryptResponse {
+  string plaintext = 1;
+}

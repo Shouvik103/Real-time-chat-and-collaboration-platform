@@ -1,0 +1,129 @@
+// =============================================================================
+// Prisma Schema — Auth Service
+// Tables: User, Workspace, Channel, WorkspaceMember
+// =============================================================================
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+// ---------------------------------------------------------------------------
+// Enums
+// ---------------------------------------------------------------------------
+
+/// Authentication provider used to create the account
+enum AuthProvider {
+  LOCAL
+  GOOGLE
+  GITHUB
+}
+
+/// Account status
+enum UserStatus {
+  ACTIVE
+  INACTIVE
+  SUSPENDED
+}
+
+/// Channel visibility
+enum ChannelType {
+  PUBLIC
+  PRIVATE
+  DIRECT
+}
+
+/// Role within a workspace
+enum WorkspaceRole {
+  OWNER
+  ADMIN
+  MEMBER
+  GUEST
+}
+
+// ---------------------------------------------------------------------------
+// Models
+// ---------------------------------------------------------------------------
+
+/// Platform user — can be local or OAuth-based
+model User {
+  id          String       @id @default(uuid())
+  email       String       @unique
+  password    String?      // null for OAuth-only accounts
+  displayName String
+  avatarUrl   String?
+  status      UserStatus   @default(ACTIVE)
+  provider    AuthProvider  @default(LOCAL)
+  providerId  String?      // OAuth provider's unique user id
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  ownedWorkspaces Workspace[]
+  memberships     WorkspaceMember[]
+
+  @@index([provider, providerId])
+  @@map("users")
+}
+
+/// A workspace groups channels and members (like a Slack workspace)
+model Workspace {
+  id          String  @id @default(uuid())
+  name        String
+  slug        String  @unique
+  description String?
+  avatarUrl   String?
+
+  ownerId String
+  owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relations
+  channels Channel[]
+  members  WorkspaceMember[]
+
+  @@map("workspaces")
+}
+
+/// A channel within a workspace
+model Channel {
+  id          String      @id @default(uuid())
+  name        String
+  description String?
+  type        ChannelType @default(PUBLIC)
+  topic       String?
+
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // A workspace cannot have two channels with the same name
+  @@unique([workspaceId, name])
+  @@map("channels")
+}
+
+/// Junction table: which users belong to which workspaces and with what role
+model WorkspaceMember {
+  id   String        @id @default(uuid())
+  role WorkspaceRole @default(MEMBER)
+
+  userId      String
+  user        User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+  workspaceId String
+  workspace   Workspace @relation(fields: [workspaceId], references: [id], onDelete: Cascade)
+
+  joinedAt DateTime @default(now())
+
+  // A user can only be a member of a workspace once
+  @@unique([userId, workspaceId])
+  @@map("workspace_members")
+}
