@@ -64,12 +64,13 @@ describe('Encryption Service', () => {
       expect(parsed.auth_tag).toBe('auth-tag-value');
     });
 
-    it('should reject when gRPC returns an error', async () => {
+    it('should fall back to plaintext when gRPC returns an error', async () => {
       mockEncrypt.mockImplementation((_req: any, cb: Function) => {
         cb(new Error('gRPC failure'), null);
       });
 
-      await expect(encrypt('test')).rejects.toThrow('gRPC failure');
+      const result = await encrypt('test');
+      expect(result).toBe('test');
     });
   });
 
@@ -101,7 +102,7 @@ describe('Encryption Service', () => {
       expect(result).toBe(JSON.stringify({ foo: 'bar' }));
     });
 
-    it('should reject when gRPC returns an error', async () => {
+    it('should fall back to stored value when gRPC returns an error', async () => {
       mockDecrypt.mockImplementation((_req: any, cb: Function) => {
         cb(new Error('Decrypt failure'), null);
       });
@@ -112,7 +113,8 @@ describe('Encryption Service', () => {
         auth_tag: 'tag',
       });
 
-      await expect(decrypt(stored)).rejects.toThrow('Decrypt failure');
+      const result = await decrypt(stored);
+      expect(result).toBe(stored);
     });
   });
 });
