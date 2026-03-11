@@ -135,11 +135,39 @@ export const getWorkspaces = async (
         const memberships = await prisma.workspaceMember.findMany({
             where: { userId },
             include: {
-                workspace: true,
+                workspace: {
+                    include: {
+                        members: {
+                            include: {
+                                user: {
+                                    select: {
+                                        id: true,
+                                        displayName: true,
+                                        avatarUrl: true,
+                                        email: true,
+                                    },
+                                },
+                            },
+                        },
+                    },
+                },
             },
         });
 
-        const workspaces = memberships.map((m) => m.workspace);
+        const workspaces = memberships.map((m) => {
+            const ws = m.workspace;
+            // For DM workspaces, include members so the frontend can show the other person's name
+            return {
+                ...ws,
+                members: ws.type === 'DM' ? ws.members.map((mem) => ({
+                    id: mem.user.id,
+                    displayName: mem.user.displayName,
+                    avatarUrl: mem.user.avatarUrl,
+                    email: mem.user.email,
+                    role: mem.role,
+                })) : undefined,
+            };
+        });
         sendSuccess(res, { workspaces });
     } catch (err) {
         next(err);
@@ -168,10 +196,18 @@ export const createWorkspace = async (
                 name,
                 slug,
                 ownerId: userId,
+                type: 'GROUP',
                 members: {
                     create: {
                         userId,
                         role: 'OWNER',
+                    },
+                },
+                channels: {
+                    create: {
+                        name: 'general',
+                        description: 'General discussion',
+                        type: 'PUBLIC',
                     },
                 },
             },
@@ -603,12 +639,67 @@ export const joinByCode = async (
             return;
         }
 
+        // Enforce maxMembers for DM workspaces
+        if (workspace.maxMembers) {
+            const memberCount = await prisma.workspaceMember.count({
+                where: { workspaceId: workspace.id },
+            });
+            if (memberCount >= workspace.maxMembers) {
+                sendError(res, 'WORKSPACE_FULL', 'This chat is full (max members reached)', 403);
+                return;
+            }
+        }
+
         await prisma.workspaceMember.create({
             data: { userId, workspaceId: workspace.id, role: 'MEMBER' },
         });
 
         logger.info(`User ${userId} joined workspace ${workspace.id} via invite code`);
         sendSuccess(res, { workspace }, 201);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// POST /workspaces/dm — create a 1-on-1 DM workspace (generates invite code)
+// ═══════════════════════════════════════════════════════════════════════════
+
+export const createDm = async (
+    req: Request,
+    res: Response,
+    next: NextFunction,
+): Promise<void> => {
+    try {
+        const userId = req.user!.id;
+
+        const dmName = `DM-${Date.now().toString(36)}`;
+        const slug = `dm-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 6)}`;
+
+        const workspace = await prisma.workspace.create({
+            data: {
+                name: dmName,
+                slug,
+                ownerId: userId,
+                type: 'DM',
+                maxMembers: 2,
+                members: {
+                    create: {
+                        userId,
+                        role: 'OWNER',
+                    },
+                },
+                channels: {
+                    create: {
+                        name: 'dm',
+                        type: 'DIRECT',
+                    },
+                },
+            },
+        });
+
+        logger.info(`DM workspace created: ${workspace.id} by ${userId}`);
+        sendSuccess(res, { workspace, inviteCode: workspace.inviteCode }, 201);
     } catch (err) {
         next(err);
     }

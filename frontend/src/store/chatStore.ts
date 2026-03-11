@@ -47,7 +47,11 @@ export const useChatStore = create<ChatState>()((set) => ({
   setWorkspaces: (workspaces) => set({ workspaces }),
 
   setActiveWorkspace: (workspace) =>
-    set({ activeWorkspace: workspace, channels: [], activeChannelId: null }),
+    set((state) => {
+      // Skip if already the active workspace (prevent clearing channels on re-click)
+      if (state.activeWorkspace?.id === workspace.id) return state;
+      return { activeWorkspace: workspace, channels: [], activeChannelId: null };
+    }),
 
   setChannels: (channels) => set({ channels }),
 

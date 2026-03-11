@@ -33,6 +33,16 @@ export interface RegisterRequest {
 
 // ─── Workspace & Channels ────────────────────────────────────────────────────
 
+export type WorkspaceType = 'GROUP' | 'DM';
+
+export interface WorkspaceMemberInfo {
+  id: string;
+  displayName: string;
+  avatarUrl?: string | null;
+  email: string;
+  role: string;
+}
+
 export interface Workspace {
   id: string;
   name: string;
@@ -41,6 +51,9 @@ export interface Workspace {
   avatarUrl?: string | null;
   inviteCode?: string;
   ownerId: string;
+  type: WorkspaceType;
+  maxMembers?: number | null;
+  members?: WorkspaceMemberInfo[];
   createdAt: string;
   updatedAt: string;
 }

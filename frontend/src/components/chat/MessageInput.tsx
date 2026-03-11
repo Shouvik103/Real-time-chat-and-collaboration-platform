@@ -2,7 +2,9 @@ import { useState, useRef, useCallback, KeyboardEvent, ChangeEvent } from 'react
 import {
   PaperAirplaneIcon,
   PaperClipIcon,
+  FaceSmileIcon,
 } from '@heroicons/react/24/solid';
+import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { fileApi } from '@/api/file.api';
 import { useChatStore } from '@/store/chatStore';
 import { useSocket } from '@/hooks/useSocket';
@@ -13,9 +15,17 @@ export function MessageInput() {
 
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
+  const [showEmojiPicker, setShowEmojiPicker] = useState(false);
   const fileRef = useRef<HTMLInputElement>(null);
+  const textareaRef = useRef<HTMLTextAreaElement>(null);
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
+
+  const handleEmojiClick = (emojiData: EmojiClickData) => {
+    setText((prev) => prev + emojiData.emoji);
+    setShowEmojiPicker(false);
+    textareaRef.current?.focus();
+  };
 
   const handleSend = useCallback(() => {
     if (!text.trim() || !activeChannelId) return;
@@ -72,8 +82,30 @@ export function MessageInput() {
   if (!activeChannelId) return null;
 
   return (
-    <div className="border-t border-chat-border bg-chat p-3">
+    <div className="border-t border-chat-border bg-chat p-3 relative">
+      {/* Emoji Picker */}
+      {showEmojiPicker && (
+        <div className="absolute bottom-16 left-3 z-50">
+          <EmojiPicker
+            onEmojiClick={handleEmojiClick}
+            theme={Theme.DARK}
+            lazyLoadEmojis
+            height={380}
+            width={320}
+          />
+        </div>
+      )}
+
       <div className="flex items-end gap-2 rounded-lg bg-sidebar border border-chat-border px-3 py-2 focus-within:border-brand/50 transition-colors">
+        {/* Emoji picker toggle */}
+        <button
+          onClick={() => setShowEmojiPicker((v) => !v)}
+          className="shrink-0 p-1 text-slate-400 hover:text-white transition-colors"
+          title="Emoji"
+        >
+          <FaceSmileIcon className="h-5 w-5" />
+        </button>
+
         {/* File attach */}
         <button
           onClick={() => fileRef.current?.click()}
@@ -93,10 +125,12 @@ export function MessageInput() {
 
         {/* Text area */}
         <textarea
+          ref={textareaRef}
           rows={1}
           value={text}
           onChange={handleChange}
           onKeyDown={handleKeyDown}
+          onFocus={() => setShowEmojiPicker(false)}
           placeholder="Type a message…"
           className="flex-1 resize-none bg-transparent text-sm text-white placeholder-slate-500 outline-none max-h-32 overflow-y-auto"
           style={{ minHeight: '24px' }}

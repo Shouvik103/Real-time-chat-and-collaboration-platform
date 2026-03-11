@@ -16,8 +16,6 @@ interface MessageBubbleProps {
   onReact?: (messageId: string, emoji: string) => void;
 }
 
-const QUICK_REACTIONS = ['👍', '❤️', '😂', '🎉', '👀', '🔥'];
-
 export function MessageBubble({
   message,
   showAvatar,
@@ -39,12 +37,13 @@ export function MessageBubble({
   return (
     <div
       className={clsx(
-        'group relative flex gap-3 px-4 py-1 hover:bg-sidebar/40 transition-colors',
-        showAvatar ? 'mt-3' : '',
+        'group relative flex gap-2 px-4 py-1 transition-colors',
+        showAvatar ? 'mt-3' : 'mt-0.5',
+        isOwn ? 'flex-row-reverse' : 'flex-row',
       )}
     >
-      {/* Avatar column */}
-      <div className="w-9 shrink-0">
+      {/* Avatar */}
+      <div className="w-9 shrink-0 self-end">
         {showAvatar && (
           <Avatar
             name={message.senderName}
@@ -54,13 +53,26 @@ export function MessageBubble({
         )}
       </div>
 
-      {/* Content */}
-      <div className="flex-1 min-w-0">
+      {/* Bubble + meta */}
+      <div
+        className={clsx(
+          'flex flex-col max-w-[65%]',
+          isOwn ? 'items-end' : 'items-start',
+        )}
+      >
+        {/* Sender name + time (above bubble) */}
         {showAvatar && (
-          <div className="flex items-baseline gap-2 mb-0.5">
-            <span className="text-sm font-semibold text-white">
-              {message.senderName}
-            </span>
+          <div
+            className={clsx(
+              'flex items-baseline gap-2 mb-1',
+              isOwn ? 'flex-row-reverse' : 'flex-row',
+            )}
+          >
+            {!isOwn && (
+              <span className="text-xs font-semibold text-slate-300">
+                {message.senderName}
+              </span>
+            )}
             <time className="text-[11px] text-slate-500">
               {formatMessageTime(message.createdAt)}
             </time>
@@ -70,10 +82,42 @@ export function MessageBubble({
           </div>
         )}
 
-        {/* Text content */}
-        <p className="text-sm leading-relaxed text-slate-200 break-words whitespace-pre-wrap">
+        {/* Message bubble */}
+        <div
+          className={clsx(
+            'relative rounded-2xl px-4 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap border-2',
+            isOwn
+              ? 'bg-blue-600 text-white border-blue-400 rounded-br-sm'
+              : 'bg-[#2a2d36] text-slate-200 border-slate-600 rounded-bl-sm',
+          )}
+        >
           {message.content}
-        </p>
+
+          {/* Hover actions inside bubble area */}
+          {isOwn && (
+            <div
+              className={clsx(
+                'absolute -top-7 hidden group-hover:flex items-center gap-0.5 rounded-md border border-chat-border bg-chat-surface shadow-md px-1 z-10',
+                'right-0',
+              )}
+            >
+              <button
+                onClick={() => onEdit?.(message)}
+                className="p-1 text-slate-400 hover:text-white rounded transition-colors"
+                title="Edit"
+              >
+                <PencilSquareIcon className="h-3.5 w-3.5" />
+              </button>
+              <button
+                onClick={() => onDelete?.(message)}
+                className="p-1 text-slate-400 hover:text-red-400 rounded transition-colors"
+                title="Delete"
+              >
+                <TrashIcon className="h-3.5 w-3.5" />
+              </button>
+            </div>
+          )}
+        </div>
 
         {/* Reactions */}
         {message.reactions.length > 0 && (
@@ -94,41 +138,6 @@ export function MessageBubble({
               </button>
             ))}
           </div>
-        )}
-      </div>
-
-      {/* Hover actions */}
-      <div className="absolute -top-3 right-4 hidden group-hover:flex items-center gap-0.5 rounded-md border border-chat-border bg-chat-surface shadow-md px-1">
-        {/* Quick reactions */}
-        {QUICK_REACTIONS.map((emoji) => (
-          <button
-            key={emoji}
-            onClick={() => onReact?.(message.id, emoji)}
-            className="p-1 text-sm hover:bg-sidebar-hover rounded transition-colors"
-            title={emoji}
-          >
-            {emoji}
-          </button>
-        ))}
-
-        {isOwn && (
-          <>
-            <div className="w-px h-4 bg-chat-border mx-0.5" />
-            <button
-              onClick={() => onEdit?.(message)}
-              className="p-1 text-slate-400 hover:text-white rounded transition-colors"
-              title="Edit"
-            >
-              <PencilSquareIcon className="h-3.5 w-3.5" />
-            </button>
-            <button
-              onClick={() => onDelete?.(message)}
-              className="p-1 text-slate-400 hover:text-red-400 rounded transition-colors"
-              title="Delete"
-            >
-              <TrashIcon className="h-3.5 w-3.5" />
-            </button>
-          </>
         )}
       </div>
     </div>

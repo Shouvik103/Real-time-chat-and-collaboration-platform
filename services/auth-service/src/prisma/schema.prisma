@@ -37,6 +37,12 @@ enum ChannelType {
   DIRECT
 }
 
+/// Workspace type: GROUP (many members) or DM (exactly 2 members)
+enum WorkspaceType {
+  GROUP
+  DM
+}
+
 /// Role within a workspace
 enum WorkspaceRole {
   OWNER
@@ -71,14 +77,16 @@ model User {
   @@map("users")
 }
 
-/// A workspace groups channels and members (like a Slack workspace)
+/// A workspace groups members — GROUP for many members, DM for 1-on-1 chat
 model Workspace {
-  id          String  @id @default(uuid())
+  id          String        @id @default(uuid())
   name        String
-  slug        String  @unique
+  slug        String        @unique
   description String?
   avatarUrl   String?
-  inviteCode  String  @unique @default(uuid())
+  inviteCode  String        @unique @default(uuid())
+  type        WorkspaceType @default(GROUP)
+  maxMembers  Int?          // null = unlimited, 2 for DMs
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)

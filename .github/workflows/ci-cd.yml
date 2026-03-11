@@ -43,8 +43,8 @@ jobs:
       - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma client
-        if: matrix.service == 'auth-service' || matrix.service == 'notification-service' || matrix.service == 'file-service'
+      - name: Generate Prisma client (auth-service only)
+        if: matrix.service == 'auth-service'
         run: npx prisma generate --schema=src/prisma/schema.prisma
 
       - name: Typecheck

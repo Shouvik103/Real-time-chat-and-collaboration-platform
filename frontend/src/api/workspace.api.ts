@@ -17,6 +17,9 @@ export const workspaceApi = {
   createWorkspace: (name: string) =>
     api.post<{ data: { workspace: Workspace } }>('/api/users/workspaces', { name }),
 
+  createDm: () =>
+    api.post<{ data: { workspace: Workspace; inviteCode: string } }>('/api/users/workspaces/dm'),
+
   deleteWorkspace: (workspaceId: string) =>
     api.delete(`/api/users/workspaces/${workspaceId}`),
 

@@ -34,6 +34,7 @@ import {
     getInviteCode,
     regenerateInviteCode,
     joinByCode,
+    createDm,
 } from '../controllers/user.controller';
 
 const router = Router();
@@ -53,6 +54,7 @@ router.patch('/profile/avatar', validate(uploadAvatarSchema), uploadAvatar);
 // Workspace routes
 router.get('/workspaces', getWorkspaces);
 router.post('/workspaces', validate(createWorkspaceSchema), createWorkspace);
+router.post('/workspaces/dm', createDm);
 router.post('/workspaces/join', validate(joinByCodeSchema), joinByCode);
 router.delete('/workspaces/:workspaceId', validate(deleteWorkspaceSchema), deleteWorkspace);
 router.get('/workspaces/:workspaceId/channels', validate(workspaceParamSchema), getChannels);

@@ -3,16 +3,23 @@
 // =============================================================================
 
 import rateLimit from 'express-rate-limit';
+import { Request, Response, NextFunction } from 'express';
+
+const isLocalhost = (req: Request): boolean => {
+    const ip = req.ip ?? '';
+    return ip === '127.0.0.1' || ip === '::1' || ip.startsWith('::ffff:127.');
+};
 
 /**
  * General API rate limiter.
  * 100 requests per 15-minute window per IP.
+ * Skipped entirely for localhost (development).
  */
-export const apiLimiter = rateLimit({
+const _apiLimiter = rateLimit({
     windowMs: 15 * 60 * 1000, // 15 minutes
     max: 100,
-    standardHeaders: true,    // Return rate limit info in `RateLimit-*` headers
-    legacyHeaders: false,     // Disable `X-RateLimit-*` headers
+    standardHeaders: true,
+    legacyHeaders: false,
     message: {
         success: false,
         error: {
@@ -22,11 +29,17 @@ export const apiLimiter = rateLimit({
     },
 });
 
+export const apiLimiter = (req: Request, res: Response, next: NextFunction) => {
+    if (isLocalhost(req)) return next();
+    return _apiLimiter(req, res, next);
+};
+
 /**
  * Strict rate limiter for auth-sensitive endpoints (login, register, refresh).
  * 20 requests per 15-minute window per IP.
+ * Skipped entirely for localhost (development).
  */
-export const authLimiter = rateLimit({
+const _authLimiter = rateLimit({
     windowMs: 15 * 60 * 1000,
     max: 20,
     standardHeaders: true,
@@ -39,3 +52,8 @@ export const authLimiter = rateLimit({
         },
     },
 });
+
+export const authLimiter = (req: Request, res: Response, next: NextFunction) => {
+    if (isLocalhost(req)) return next();
+    return _authLimiter(req, res, next);
+};

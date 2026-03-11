@@ -42,8 +42,17 @@ app.use(morgan('short'));
 app.use(passport.initialize());
 
 // ── Rate limiting ───────────────────────────────────────────────────────────
-
-app.use(apiLimiter);
+// OAuth redirect routes are exempt — they're browser-initiated, controlled by
+// the provider, and can't be abused in the same way as API endpoints.
+// Localhost requests are also exempt for development convenience.
+app.use((req, res, next) => {
+    const ip = req.ip ?? '';
+    const isLocalhost = ip === '127.0.0.1' || ip === '::1' || ip.startsWith('::ffff:127.');
+    if (isLocalhost) return next();
+    const oauthPaths = ['/api/auth/google', '/api/auth/github'];
+    if (oauthPaths.some((p) => req.path.startsWith(p))) return next();
+    return apiLimiter(req, res, next);
+});
 
 // ── Health check ────────────────────────────────────────────────────────────
 
