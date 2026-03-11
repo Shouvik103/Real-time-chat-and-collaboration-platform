@@ -64,11 +64,12 @@ const getClient = (): EncryptionGrpcClient | null => {
 export const encrypt = (plaintext: string): Promise<string> => {
     const c = getClient();
     if (!c) return Promise.resolve(plaintext);
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         c.Encrypt({ plaintext }, (err, res) => {
             if (err) {
-                logger.error('gRPC encrypt error', { error: err.message });
-                reject(err);
+                // Encryption engine unavailable — store plaintext so messages are never lost
+                logger.warn('gRPC encrypt unavailable, storing plaintext', { error: err.message });
+                resolve(plaintext);
             } else {
                 resolve(JSON.stringify({
                     ciphertext: res.ciphertext,
@@ -99,11 +100,11 @@ export const decrypt = (stored: string): Promise<string> => {
         return Promise.resolve(stored);
     }
 
-    return new Promise((resolve, reject) => {
+    return new Promise((resolve) => {
         c.Decrypt(payload, (err, res) => {
             if (err) {
-                logger.error('gRPC decrypt error', { error: err.message });
-                reject(err);
+                logger.warn('gRPC decrypt unavailable, returning stored value', { error: err.message });
+                resolve(stored);
             } else {
                 resolve(res.plaintext);
             }

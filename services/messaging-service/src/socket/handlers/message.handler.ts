@@ -94,6 +94,7 @@ export const registerMessageHandlers = (io: Server, socket: AuthenticatedSocket)
 
             io.to(deleted.channelId).emit('message_deleted', {
                 messageId: deleted._id.toString(),
+                channelId: deleted.channelId,
             });
         } catch (err) {
             logger.error('delete_message error', { error: (err as Error).message });

@@ -1,3 +1,4 @@
+import 'dotenv/config';
 import http from 'http';
 import { Server } from 'socket.io';
 import { createAdapter } from '@socket.io/redis-adapter';

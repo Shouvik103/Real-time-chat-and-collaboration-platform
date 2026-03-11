@@ -37,4 +37,18 @@ router.get('/:channelId', async (req: Request, res: Response, next: NextFunction
     }
 });
 
+/**
+ * DELETE /messages/channel/:channelId
+ * Deletes all messages for a channel (called when a channel is deleted).
+ */
+router.delete('/channel/:channelId', async (req: Request, res: Response, next: NextFunction) => {
+    try {
+        const { channelId } = req.params;
+        const deletedCount = await messageService.deleteChannelMessages(channelId);
+        res.json({ success: true, data: { deletedCount } });
+    } catch (err) {
+        next(err);
+    }
+});
+
 export default router;

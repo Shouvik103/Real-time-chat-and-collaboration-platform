@@ -27,6 +27,7 @@ const ACCESS_TTL_SECONDS = 15 * 60;
 export interface TokenPayload {
     userId: string;
     email: string;
+    displayName: string;
 }
 
 export interface DecodedToken extends TokenPayload, JwtPayload {

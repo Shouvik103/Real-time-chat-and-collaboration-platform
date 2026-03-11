@@ -71,7 +71,18 @@ export const toggleReaction = async (
     return msg.save();
 };
 
+/** Normalise a lean document: map _id → id for the frontend. */
+const normaliseLean = (doc: any) => {
+    const { _id, __v, ...rest } = doc;
+    return { id: _id.toString(), ...rest };
+};
+
 /** Cursor-based pagination — returns 20 messages before the cursor (or latest). */
+export const deleteChannelMessages = async (channelId: string): Promise<number> => {
+    const result = await Message.deleteMany({ channelId });
+    return result.deletedCount ?? 0;
+};
+
 export const getChannelMessages = async (
     channelId: string,
     cursor?: string,
@@ -93,5 +104,5 @@ export const getChannelMessages = async (
         nextCursor = extra._id.toString();
     }
 
-    return { messages, nextCursor };
+    return { messages: messages.map(normaliseLean), nextCursor };
 };

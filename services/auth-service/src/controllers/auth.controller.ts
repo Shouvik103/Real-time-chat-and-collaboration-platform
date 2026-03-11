@@ -77,8 +77,8 @@ export const register = async (
         });
 
         // Issue tokens
-        const accessToken = signAccessToken({ userId: user.id, email: user.email });
-        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email });
+        const accessToken = signAccessToken({ userId: user.id, email: user.email, displayName: user.displayName });
+        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email, displayName: user.displayName });
 
         // Set refresh token as httpOnly cookie
         res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
@@ -132,8 +132,8 @@ export const login = async (
         }
 
         // Issue tokens
-        const accessToken = signAccessToken({ userId: user.id, email: user.email });
-        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email });
+        const accessToken = signAccessToken({ userId: user.id, email: user.email, displayName: user.displayName });
+        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email, displayName: user.displayName });
 
         res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
 
@@ -224,13 +224,20 @@ export const refresh = async (
         // Revoke the old refresh token (rotation)
         await revokeRefreshToken(decoded.userId, decoded.jti);
 
+        // Fetch the latest user record (displayName may have changed, and old tokens lacked it)
+        const refreshUser = await prisma.user.findUnique({ where: { id: decoded.userId } });
+        if (!refreshUser) {
+            sendError(res, 'USER_NOT_FOUND', 'User no longer exists', 401);
+            return;
+        }
+
         // Issue new token pair
-        const accessToken = signAccessToken({ userId: decoded.userId, email: decoded.email });
-        const refreshToken = await signRefreshToken({ userId: decoded.userId, email: decoded.email });
+        const accessToken = signAccessToken({ userId: refreshUser.id, email: refreshUser.email, displayName: refreshUser.displayName });
+        const refreshToken = await signRefreshToken({ userId: refreshUser.id, email: refreshUser.email, displayName: refreshUser.displayName });
 
         res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
 
-        logger.info(`Token refreshed for user: ${decoded.userId}`);
+        logger.info(`Token refreshed for user: ${refreshUser.id}`);
 
         sendSuccess(res, { accessToken, refreshToken });
     } catch (err) {
@@ -295,8 +302,8 @@ export const oauthCallback = async (
             throw new AppError(401, 'OAUTH_FAILED', 'OAuth authentication failed');
         }
 
-        const accessToken = signAccessToken({ userId: user.id, email: user.email });
-        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email });
+        const accessToken = signAccessToken({ userId: user.id, email: user.email, displayName: user.displayName });
+        const refreshToken = await signRefreshToken({ userId: user.id, email: user.email, displayName: user.displayName });
 
         res.cookie('refreshToken', refreshToken, REFRESH_COOKIE_OPTIONS);
 

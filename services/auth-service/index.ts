@@ -3,6 +3,7 @@
 // Connects to PostgreSQL & Redis, then starts Express on AUTH_SERVICE_PORT
 // =============================================================================
 
+import 'dotenv/config';
 import app from './src/app';
 import { logger } from './src/utils/logger';
 import { redis } from './src/config/redis';

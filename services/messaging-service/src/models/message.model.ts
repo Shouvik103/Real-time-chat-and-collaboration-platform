@@ -52,6 +52,16 @@ const MessageSchema = new Schema<IMessage>(
     { timestamps: true },
 );
 
+// Normalize _id → id in JSON output (used by Socket.IO emit and res.json)
+MessageSchema.set('toJSON', {
+    virtuals: true,
+    versionKey: false,
+    transform(_doc: any, ret: any) {
+        ret.id = ret._id?.toString();
+        delete ret._id;
+    },
+});
+
 MessageSchema.index({ channelId: 1, createdAt: -1 });
 
 export const Message = mongoose.model<IMessage>('Message', MessageSchema);

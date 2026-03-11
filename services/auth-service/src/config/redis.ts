@@ -6,7 +6,7 @@
 import Redis from 'ioredis';
 import { logger } from '../utils/logger';
 
-const REDIS_URL = process.env.REDIS_URL || 'redis://:chatpassword@localhost:6379';
+const REDIS_URL = process.env.REDIS_URL || 'redis://:chat_password@localhost:6379';
 
 /**
  * Singleton Redis client shared across the Auth Service.

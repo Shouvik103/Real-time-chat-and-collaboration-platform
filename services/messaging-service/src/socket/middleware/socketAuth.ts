@@ -27,12 +27,13 @@ export const socketAuth = (socket: Socket, next: (err?: Error) => void): void =>
         const decoded = jwt.verify(token, JWT_SECRET) as JwtPayload & {
             userId: string;
             email: string;
+            displayName?: string;
         };
 
         (socket as AuthenticatedSocket).userId = decoded.userId;
         (socket as AuthenticatedSocket).email = decoded.email;
         (socket as AuthenticatedSocket).username =
-            decoded.email?.split('@')[0] || decoded.userId;
+            decoded.displayName || decoded.email?.split('@')[0] || decoded.userId;
 
         next();
     } catch (err) {

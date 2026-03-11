@@ -78,6 +78,7 @@ model Workspace {
   slug        String  @unique
   description String?
   avatarUrl   String?
+  inviteCode  String  @unique @default(uuid())
 
   ownerId String
   owner   User   @relation(fields: [ownerId], references: [id], onDelete: Cascade)
