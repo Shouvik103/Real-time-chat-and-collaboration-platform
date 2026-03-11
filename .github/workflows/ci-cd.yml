@@ -12,7 +12,6 @@ on:
 
 env:
   REGISTRY: ghcr.io
-  IMAGE_PREFIX: ${{ github.repository_owner }}/chat-platform
 
 jobs:
   # ─── Job 1: Lint & Typecheck ─────────────────────────────────────────────
@@ -172,6 +171,9 @@ jobs:
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
+
+      - name: Set lowercase image prefix
+        run: echo "IMAGE_PREFIX=$(echo '${{ github.repository_owner }}' | tr '[:upper:]' '[:lower:]')/chat-platform" >> $GITHUB_ENV
 
       - name: Build and push
         uses: docker/build-push-action@v5
