@@ -8,10 +8,10 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 
 find_package(OpenSSL REQUIRED)
 find_package(Protobuf REQUIRED)
-find_package(gRPC CONFIG REQUIRED)
 find_package(PkgConfig REQUIRED)
 
-pkg_check_modules(LZ4 REQUIRED IMPORTED_TARGET liblz4)
+pkg_check_modules(LZ4  REQUIRED IMPORTED_TARGET liblz4)
+pkg_check_modules(GRPC REQUIRED IMPORTED_TARGET grpc++>=1.30)
 
 # ── Proto code generation ────────────────────────────────────────────────────
 
@@ -61,6 +61,6 @@ target_link_libraries(encryption_engine PRIVATE
     OpenSSL::Crypto
     PkgConfig::LZ4
     protobuf::libprotobuf
-    gRPC::grpc++
-    gRPC::grpc++_reflection
+    PkgConfig::GRPC
+    grpc++_reflection
 )
