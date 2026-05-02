@@ -17,11 +17,26 @@ export const updateProfileSchema = z.object({
             .optional(),
         avatarUrl: z
             .string()
-            .url('Avatar must be a valid URL')
+            .refine(
+                (val) => val.startsWith('data:image/') || /^https?:\/\//.test(val) || val === '',
+                'Avatar must be a valid URL or image',
+            )
+            .optional(),
+        description: z
+            .string()
+            .max(500, 'Description must be at most 500 characters')
+            .optional(),
+        dob: z
+            .string()
+            .regex(/^\d{4}-\d{2}-\d{2}$/, 'Invalid date format (YYYY-MM-DD)')
+            .optional(),
+        gender: z
+            .string()
+            .max(50, 'Gender string is too long')
             .optional(),
     }).refine(
-        (data) => data.displayName !== undefined || data.avatarUrl !== undefined,
-        { message: 'At least one field (displayName or avatarUrl) must be provided' },
+        (data) => Object.keys(data).length > 0,
+        { message: 'At least one field must be provided to update' },
     ),
 });
 

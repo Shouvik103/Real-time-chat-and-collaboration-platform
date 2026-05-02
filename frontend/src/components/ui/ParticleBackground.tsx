@@ -36,9 +36,9 @@ export function ParticleBackground() {
         this.ox = x;
         this.oy = y;
         this.quadrant = quadrant;
-        // Slower drift for a calmer motion
-        this.dx = (Math.random() - 0.5) * 0.9;
-        this.dy = (Math.random() - 0.5) * 0.9;
+        // Medium initial drift
+        this.dx = (Math.random() - 0.5) * 1.5;
+        this.dy = (Math.random() - 0.5) * 1.5;
         this.radius = 1.5;
       }
 
@@ -47,31 +47,26 @@ export function ParticleBackground() {
         ctx.beginPath();
         ctx.arc(this.x, this.y, this.radius, 0, Math.PI * 2);
         ctx.fillStyle = 'rgba(255, 255, 255, 0.9)';
-        // Make the dots glowy
         ctx.shadowBlur = 18;
-        ctx.shadowColor = 'rgba(56, 189, 248, 1)'; // Sky glow
+        ctx.shadowColor = 'rgba(56, 189, 248, 1)';
         ctx.fill();
-        ctx.shadowBlur = 0; // Reset so lines don't get the heavy blur
+        ctx.shadowBlur = 0;
       }
 
       update() {
-        // Bounce off edges
-        if (this.x < 0 || this.x > canvas!.width) this.dx = -this.dx;
-        if (this.y < 0 || this.y > canvas!.height) this.dy = -this.dy;
-
         // Gently ease back to the original position to avoid clustering
-        const returnStrength = 0.002;
+        const returnStrength = 0.001; // Medium pull
         this.x += (this.ox - this.x) * returnStrength;
         this.y += (this.oy - this.y) * returnStrength;
 
-        // Add a tiny random wander so particles never settle
-        const wander = 0.03;
+        // Add a random wander so particles never settle
+        const wander = 0.08; // Medium wander
         this.dx += (Math.random() - 0.5) * wander;
         this.dy += (Math.random() - 0.5) * wander;
 
         // Clamp speed to keep motion smooth and consistent
-        const maxSpeed = 1.2;
-        const minSpeed = 0.18;
+        const maxSpeed = 2.2; // Medium max speed
+        const minSpeed = 0.3; // Medium min speed
         const speed = Math.sqrt(this.dx * this.dx + this.dy * this.dy) || 0.0001;
         if (speed > maxSpeed) {
           this.dx = (this.dx / speed) * maxSpeed;
@@ -89,48 +84,32 @@ export function ParticleBackground() {
 
     const initParticles = () => {
       particles = [];
-      // Balanced density between the original 10000 and the previous 5000 setting
       const numParticles = Math.min(Math.floor((canvas.width * canvas.height) / 7500), 250);
-      const evenTotal = Math.max(4, numParticles - (numParticles % 4));
-      const quarter = evenTotal / 4;
-      const centerX = canvas.width / 2;
-      const centerY = canvas.height / 2;
-      const boundary = 6;
-
-      const leftMinX = edgePadding;
-      const leftMaxX = Math.max(edgePadding, centerX - boundary - edgePadding);
-      const rightMinX = Math.min(canvas.width - edgePadding, centerX + boundary + edgePadding);
-      const rightMaxX = canvas.width - edgePadding;
-
-      const topMinY = edgePadding;
-      const topMaxY = Math.max(edgePadding, centerY - boundary - edgePadding);
-      const bottomMinY = Math.min(canvas.height - edgePadding, centerY + boundary + edgePadding);
-      const bottomMaxY = canvas.height - edgePadding;
 
       const randInRange = (min: number, max: number) => {
         if (max <= min) return min;
         return min + Math.random() * (max - min);
       };
 
-      for (let i = 0; i < quarter; i++) {
-        const x = randInRange(leftMinX, leftMaxX);
-        const y = randInRange(topMinY, topMaxY);
-        particles.push(new Particle(x, y, 'lt'));
-      }
-      for (let i = 0; i < quarter; i++) {
-        const x = randInRange(leftMinX, leftMaxX);
-        const y = randInRange(bottomMinY, bottomMaxY);
-        particles.push(new Particle(x, y, 'lb'));
-      }
-      for (let i = 0; i < quarter; i++) {
-        const x = randInRange(rightMinX, rightMaxX);
-        const y = randInRange(topMinY, topMaxY);
-        particles.push(new Particle(x, y, 'rt'));
-      }
-      for (let i = 0; i < quarter; i++) {
-        const x = randInRange(rightMinX, rightMaxX);
-        const y = randInRange(bottomMinY, bottomMaxY);
-        particles.push(new Particle(x, y, 'rb'));
+      for (let i = 0; i < numParticles; i++) {
+        let x = randInRange(edgePadding, canvas.width - edgePadding);
+        let y = randInRange(edgePadding, canvas.height - edgePadding);
+
+        const card = document.getElementById('login-card');
+        if (card) {
+          const rect = card.getBoundingClientRect();
+          const pad = edgePadding + 4;
+          if (x > rect.left - pad && x < rect.right + pad && y > rect.top - pad && y < rect.bottom + pad) {
+            if (Math.random() > 0.5) {
+              y = Math.random() > 0.5 ? randInRange(edgePadding, rect.top - pad) : randInRange(rect.bottom + pad, canvas.height - edgePadding);
+            } else {
+              x = Math.random() > 0.5 ? randInRange(edgePadding, rect.left - pad) : randInRange(rect.right + pad, canvas.width - edgePadding);
+            }
+          }
+        }
+
+        const quad = x < canvas.width / 2 ? (y < canvas.height / 2 ? 'lt' : 'lb') : (y < canvas.height / 2 ? 'rt' : 'rb');
+        particles.push(new Particle(x, y, quad as any));
       }
     };
 
@@ -144,28 +123,54 @@ export function ParticleBackground() {
       const edgeKick = 0.08;
 
       const enforceBounds = (p: Particle) => {
-        const isLeft = p.quadrant === 'lt' || p.quadrant === 'lb';
-        const isTop = p.quadrant === 'lt' || p.quadrant === 'rt';
-
-        const minX = isLeft ? edgePadding : centerX + boundary + edgePadding;
-        const maxX = isLeft ? centerX - boundary - edgePadding : canvas!.width - edgePadding;
-        const minY = isTop ? edgePadding : centerY + boundary + edgePadding;
-        const maxY = isTop ? centerY - boundary - edgePadding : canvas!.height - edgePadding;
-
-        if (p.x < minX) {
-          p.x = minX;
+        // 1. Screen boundaries
+        if (p.x < edgePadding) {
+          p.x = edgePadding;
           p.dx = Math.abs(p.dx) * bounceDamping + edgeKick;
-        } else if (p.x > maxX) {
-          p.x = maxX;
+        } else if (p.x > canvas!.width - edgePadding) {
+          p.x = canvas!.width - edgePadding;
           p.dx = -Math.abs(p.dx) * bounceDamping - edgeKick;
         }
 
-        if (p.y < minY) {
-          p.y = minY;
+        if (p.y < edgePadding) {
+          p.y = edgePadding;
           p.dy = Math.abs(p.dy) * bounceDamping + edgeKick;
-        } else if (p.y > maxY) {
-          p.y = maxY;
+        } else if (p.y > canvas!.height - edgePadding) {
+          p.y = canvas!.height - edgePadding;
           p.dy = -Math.abs(p.dy) * bounceDamping - edgeKick;
+        }
+
+        // 2. Login Card boundaries (solid wall)
+        const card = document.getElementById('login-card');
+        if (card) {
+          const rect = card.getBoundingClientRect();
+          const pad = edgePadding + 4;
+          const minX = rect.left - pad;
+          const maxX = rect.right + pad;
+          const minY = rect.top - pad;
+          const maxY = rect.bottom + pad;
+
+          if (p.x > minX && p.x < maxX && p.y > minY && p.y < maxY) {
+            const distLeft = Math.abs(p.x - minX);
+            const distRight = Math.abs(maxX - p.x);
+            const distTop = Math.abs(p.y - minY);
+            const distBottom = Math.abs(maxY - p.y);
+            const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+            if (minDist === distLeft) {
+              p.x = minX;
+              p.dx = -Math.abs(p.dx) * bounceDamping - edgeKick;
+            } else if (minDist === distRight) {
+              p.x = maxX;
+              p.dx = Math.abs(p.dx) * bounceDamping + edgeKick;
+            } else if (minDist === distTop) {
+              p.y = minY;
+              p.dy = -Math.abs(p.dy) * bounceDamping - edgeKick;
+            } else {
+              p.y = maxY;
+              p.dy = Math.abs(p.dy) * bounceDamping + edgeKick;
+            }
+          }
         }
       };
 

@@ -17,6 +17,9 @@ const sanitiseUser = (user: {
     email: string;
     displayName: string;
     avatarUrl: string | null;
+    description: string | null;
+    dob: string | null;
+    gender: string | null;
     status: string;
     provider: string;
     createdAt: Date;
@@ -26,6 +29,9 @@ const sanitiseUser = (user: {
     email: user.email,
     displayName: user.displayName,
     avatarUrl: user.avatarUrl,
+    description: user.description,
+    dob: user.dob,
+    gender: user.gender,
     status: user.status,
     provider: user.provider,
     createdAt: user.createdAt,
@@ -70,11 +76,23 @@ export const updateProfile = async (
 ): Promise<void> => {
     try {
         const userId = req.user!.id;
-        const { displayName, avatarUrl } = req.body;
+        const { displayName, avatarUrl, description, dob, gender } = req.body;
 
-        const updateData: Record<string, string> = {};
+        logger.info(`Profile update request for user ${userId}`, {
+            hasDisplayName: !!displayName,
+            hasAvatarUrl: !!avatarUrl,
+            avatarUrlLength: avatarUrl?.length || 0,
+            hasDescription: !!description,
+            hasDob: !!dob,
+            hasGender: !!gender,
+        });
+
+        const updateData: Record<string, any> = {};
         if (displayName !== undefined) updateData.displayName = displayName;
         if (avatarUrl !== undefined) updateData.avatarUrl = avatarUrl;
+        if (description !== undefined) updateData.description = description;
+        if (dob !== undefined) updateData.dob = dob;
+        if (gender !== undefined) updateData.gender = gender;
 
         const updatedUser = await prisma.user.update({
             where: { id: userId },
@@ -85,6 +103,7 @@ export const updateProfile = async (
 
         sendSuccess(res, { user: sanitiseUser(updatedUser) });
     } catch (err) {
+        logger.error('Profile update failed', { error: (err as Error).message, stack: (err as Error).stack });
         next(err);
     }
 };

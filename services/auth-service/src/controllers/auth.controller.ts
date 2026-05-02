@@ -24,7 +24,7 @@ const prisma = new PrismaClient();
 const REFRESH_COOKIE_OPTIONS = {
     httpOnly: true,
     secure: process.env.NODE_ENV === 'production',
-    sameSite: 'strict' as const,
+    sameSite: 'lax' as const,
     path: '/',
     maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days in ms
 };
@@ -310,9 +310,9 @@ export const oauthCallback = async (
         // Redirect to the frontend with tokens as query params
         // The frontend will read them and store appropriately
         const frontendUrl = process.env.FRONTEND_URL || 'http://localhost:5173';
-        const redirectUrl = `${frontendUrl}/auth/callback?accessToken=${accessToken}&refreshToken=${refreshToken}`;
+        const redirectUrl = `${frontendUrl}/auth/callback?accessToken=${encodeURIComponent(accessToken)}&refreshToken=${encodeURIComponent(refreshToken)}`;
 
-        logger.info(`OAuth login successful for user: ${user.id}`);
+        logger.info(`OAuth login successful for user: ${user.id}, redirecting to frontend`);
         res.redirect(redirectUrl);
     } catch (err) {
         next(err);

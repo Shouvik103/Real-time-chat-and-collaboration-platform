@@ -9,6 +9,9 @@ export interface User {
   email: string;
   displayName: string;
   avatarUrl: string | null;
+  description: string | null;
+  dob: string | null;
+  gender: string | null;
   status: 'ACTIVE' | 'INACTIVE' | 'SUSPENDED';
   provider: string;
   createdAt: string;

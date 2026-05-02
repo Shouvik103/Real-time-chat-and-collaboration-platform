@@ -14,6 +14,8 @@ export const authApi = {
   refreshToken: () =>
     api.post<{ data: { accessToken: string } }>('/api/auth/refresh'),
 
-  getMe: () =>
-    api.get<{ data: { user: User } }>('/api/auth/me'),
+  getMe: (accessToken?: string) =>
+    api.get<{ data: { user: User } }>('/api/auth/me', accessToken
+      ? { headers: { Authorization: `Bearer ${accessToken}` } }
+      : undefined),
 };

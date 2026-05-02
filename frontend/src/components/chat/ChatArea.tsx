@@ -108,20 +108,52 @@ export function ChatArea() {
       <div className="flex flex-1 items-center justify-center bg-chat">
         <div className="text-center space-y-5 px-8 max-w-sm">
           <div className="mx-auto h-24 w-24 rounded-full bg-chat-surface border border-chat-border flex items-center justify-center">
-            <ChatBubbleLeftRightIcon className="h-12 w-12 text-slate-600" />
+            <svg
+              viewBox="0 0 120 120"
+              className="h-20 w-20"
+              aria-label="InsTalk logo"
+            >
+              <defs>
+                <linearGradient id="chatTalkGreen" x1="0" y1="0" x2="1" y2="1">
+                  <stop offset="0%" stopColor="#34d399" />
+                  <stop offset="100%" stopColor="#38bdf8" />
+                </linearGradient>
+              </defs>
+              {/* Back bubble outline */}
+              <g transform="translate(10 -4)">
+                <path
+                  d="M70 22c16.6 0 30 12.6 30 28 0 9.5-5.2 17.9-13.4 22.9v11.4l-12.2-6.8c-1.4.2-2.9.3-4.4.3-16.6 0-30-12.6-30-28S53.4 22 70 22z"
+                  fill="none"
+                  stroke="url(#chatTalkGreen)"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  opacity="0.9"
+                />
+              </g>
+              {/* Front bubble + inner details */}
+              <g transform="translate(-6 4)">
+                <path
+                  d="M46 32c-16.6 0-30 12.6-30 28 0 9.5 5.2 17.9 13.4 22.9v11.4l12.2-6.8c1.4.2 2.9.3 4.4.3 16.6 0 30-12.6 30-28S62.6 32 46 32z"
+                  fill="none"
+                  stroke="url(#chatTalkGreen)"
+                  strokeWidth="7"
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                />
+                <circle cx="46" cy="60" r="22" fill="#a7f3d0" opacity="0.9" />
+                <circle cx="38" cy="60" r="3.6" fill="#0b101b" />
+                <circle cx="46" cy="60" r="3.6" fill="#0b101b" />
+                <circle cx="54" cy="60" r="3.6" fill="#0b101b" />
+              </g>
+            </svg>
           </div>
           <div className="space-y-2">
-            <h2 className="text-2xl font-light text-white">Welcome to ChatApp</h2>
+            <h2 className="text-2xl font-light text-white">Welcome to InsTalk</h2>
             <p className="text-sm text-slate-400 leading-relaxed">
               Select a conversation from the sidebar to start chatting, or create a new group / direct message.
             </p>
           </div>
-          <p className="text-xs text-slate-600 flex items-center justify-center gap-1.5">
-            <svg xmlns="http://www.w3.org/2000/svg" className="h-3.5 w-3.5" viewBox="0 0 20 20" fill="currentColor">
-              <path fillRule="evenodd" d="M5 9V7a5 5 0 0110 0v2a2 2 0 012 2v5a2 2 0 01-2 2H5a2 2 0 01-2-2v-5a2 2 0 012-2zm8-2v2H7V7a3 3 0 016 0z" clipRule="evenodd" />
-            </svg>
-            End-to-end encrypted
-          </p>
         </div>
       </div>
     );

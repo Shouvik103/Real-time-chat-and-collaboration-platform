@@ -41,6 +41,7 @@ router.get('/me', validate(meSchema), authenticate, me);
 router.get(
     '/google',
     validate(oauthStartSchema),
+    (_req, res, next) => { res.set('Cache-Control', 'no-store'); next(); },
     passport.authenticate('google', { scope: ['profile', 'email'], session: false }),
 );
 

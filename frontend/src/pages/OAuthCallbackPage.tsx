@@ -11,7 +11,9 @@ export default function OAuthCallbackPage() {
 
   useEffect(() => {
     const accessToken = params.get('accessToken');
+    const refreshToken = params.get('refreshToken');
     if (!accessToken) {
+      console.error('[OAuthCallback] No accessToken found in URL params');
       navigate('/login', { replace: true });
       return;
     }
@@ -20,13 +22,14 @@ export default function OAuthCallbackPage() {
     useAuthStore.getState().updateAccessToken(accessToken);
 
     authApi
-      .getMe()
+      .getMe(accessToken)
       .then((res) => {
         setAuth(res.data.data.user, accessToken);
         navigate('/', { replace: true });
       })
-      .catch(() => {
-        navigate('/login', { replace: true });
+      .catch((err) => {
+        console.error('[OAuthCallback] getMe failed:', err?.response?.status, err?.response?.data || err.message);
+        navigate('/login?error=oauth_callback_failed', { replace: true });
       });
   }, []); // eslint-disable-line react-hooks/exhaustive-deps
 

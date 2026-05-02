@@ -8,6 +8,7 @@ interface UiState {
   inviteMemberModalOpen: boolean;
   joinByCodeModalOpen: boolean;
   createDmModalOpen: boolean;
+  profileModalOpen: boolean;
   unreadCount: number;
 
   setSidebarOpen: (open: boolean) => void;
@@ -18,6 +19,7 @@ interface UiState {
   setInviteMemberModalOpen: (open: boolean) => void;
   setJoinByCodeModalOpen: (open: boolean) => void;
   setCreateDmModalOpen: (open: boolean) => void;
+  setProfileModalOpen: (open: boolean) => void;
   setUnreadCount: (count: number) => void;
 }
 
@@ -29,6 +31,7 @@ export const useUiStore = create<UiState>()((set) => ({
   inviteMemberModalOpen: false,
   joinByCodeModalOpen: false,
   createDmModalOpen: false,
+  profileModalOpen: false,
   unreadCount: 0,
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
@@ -39,5 +42,6 @@ export const useUiStore = create<UiState>()((set) => ({
   setInviteMemberModalOpen: (open) => set({ inviteMemberModalOpen: open }),
   setJoinByCodeModalOpen: (open) => set({ joinByCodeModalOpen: open }),
   setCreateDmModalOpen: (open) => set({ createDmModalOpen: open }),
+  setProfileModalOpen: (open) => set({ profileModalOpen: open }),
   setUnreadCount: (count) => set({ unreadCount: count }),
 }));

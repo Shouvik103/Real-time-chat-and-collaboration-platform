@@ -1,6 +1,7 @@
 import { Bars3Icon } from '@heroicons/react/24/outline';
 import { Sidebar } from '@/components/sidebar/Sidebar';
 import { ChatArea } from '@/components/chat/ChatArea';
+import { ProfileModal } from '@/components/profile/ProfileModal';
 import { useSocket } from '@/hooks/useSocket';
 import { useUiStore } from '@/store/uiStore';
 
@@ -26,6 +27,7 @@ export default function ChatPage() {
         )}
         <ChatArea />
       </main>
+      <ProfileModal />
     </div>
   );
 }

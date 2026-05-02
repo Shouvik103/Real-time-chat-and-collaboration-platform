@@ -29,9 +29,18 @@ export const useAuthStore = create<AuthState>()(
     }),
     {
       name: 'chat-auth',
-      // only persist user; access token is sensitive but needed cross-tab
       partialize: (state) => ({
-        user: state.user,
+        // Strip base64 data-URL avatars before writing to localStorage
+        // (they can be 10+ MB and blow the ~5 MB quota).
+        // The avatar is still in memory and re-fetched on reload via /me.
+        user: state.user
+          ? {
+              ...state.user,
+              avatarUrl: state.user.avatarUrl?.startsWith('data:')
+                ? null
+                : state.user.avatarUrl,
+            }
+          : null,
         accessToken: state.accessToken,
         isAuthenticated: state.isAuthenticated,
       }),

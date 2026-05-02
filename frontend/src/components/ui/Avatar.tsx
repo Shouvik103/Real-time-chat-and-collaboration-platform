@@ -1,9 +1,10 @@
+import { useState, useEffect } from 'react';
 import { clsx } from 'clsx';
 
 interface AvatarProps {
   src?: string | null;
   name: string;
-  size?: 'xs' | 'sm' | 'md' | 'lg';
+  size?: 'xs' | 'sm' | 'md' | 'lg' | 'xl';
   online?: boolean;
   className?: string;
 }
@@ -13,6 +14,7 @@ const sizeMap = {
   sm: 'h-8 w-8 text-xs',
   md: 'h-9 w-9 text-sm',
   lg: 'h-12 w-12 text-base',
+  xl: 'h-24 w-24 text-3xl',
 };
 
 const dotSizeMap = {
@@ -20,6 +22,7 @@ const dotSizeMap = {
   sm: 'h-2 w-2',
   md: 'h-2.5 w-2.5',
   lg: 'h-3 w-3',
+  xl: 'h-4 w-4',
 };
 
 function getInitials(name: string): string {
@@ -45,13 +48,20 @@ function getColorClass(name: string): string {
 }
 
 export function Avatar({ src, name, size = 'md', online, className }: AvatarProps) {
+  const [imgError, setImgError] = useState(false);
+
+  useEffect(() => {
+    setImgError(false);
+  }, [src]);
+
   return (
     <span className={clsx('relative inline-flex shrink-0', className)}>
-      {src ? (
+      {src && !imgError ? (
         <img
           src={src}
           alt={name}
           className={clsx('rounded-full object-cover', sizeMap[size])}
+          onError={() => setImgError(true)}
         />
       ) : (
         <span
