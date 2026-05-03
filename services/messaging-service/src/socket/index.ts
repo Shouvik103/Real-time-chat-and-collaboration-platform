@@ -12,6 +12,9 @@ export const registerSocketHandlers = (io: Server): void => {
         const socket = rawSocket as AuthenticatedSocket;
         logger.info(`Socket connected: ${socket.userId} (${socket.id})`);
 
+        // Join personal room for global notifications
+        socket.join(socket.userId);
+
         // Upsert presence record
         await Presence.findOneAndUpdate(
             { userId: socket.userId },

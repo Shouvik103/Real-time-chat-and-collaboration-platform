@@ -11,6 +11,7 @@ import type { Message } from '@/types';
 interface MessageBubbleProps {
   message: Message;
   showAvatar: boolean;
+  currentAvatarUrl?: string | null;
   onEdit?: (message: Message) => void;
   onDelete?: (message: Message) => void;
   onReact?: (messageId: string, emoji: string) => void;
@@ -19,6 +20,7 @@ interface MessageBubbleProps {
 export function MessageBubble({
   message,
   showAvatar,
+  currentAvatarUrl,
   onEdit,
   onDelete,
   onReact,
@@ -47,7 +49,7 @@ export function MessageBubble({
         {showAvatar && (
           <Avatar
             name={message.senderName}
-            src={message.senderAvatar}
+            src={currentAvatarUrl ?? message.senderAvatar}
             size="md"
           />
         )}

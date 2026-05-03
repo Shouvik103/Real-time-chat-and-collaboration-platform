@@ -182,7 +182,7 @@ export function ChatArea() {
       <div
         ref={scrollRef}
         onScroll={handleScroll}
-        className="flex-1 overflow-y-auto py-2"
+        className="flex-1 overflow-y-auto py-2 chat-bubble-pattern"
       >
         {isFetchingNextPage && (
           <div className="flex justify-center py-3">
@@ -213,6 +213,11 @@ export function ChatArea() {
             const showDivider =
               !prev || !isSameDay(prev.createdAt, msg.createdAt);
 
+            const isCurrentUser = currentUser?.id === msg.senderId;
+            const currentAvatarUrl = isCurrentUser
+              ? currentUser?.avatarUrl
+              : activeWorkspace?.members?.find((m) => m.id === msg.senderId)?.avatarUrl;
+
             return (
               <div key={msg.id}>
                 {showDivider && (
@@ -227,6 +232,7 @@ export function ChatArea() {
                 <MessageBubble
                   message={msg}
                   showAvatar={showAvatar}
+                  currentAvatarUrl={currentAvatarUrl}
                   onEdit={setEditingMessage}
                   onDelete={handleDelete}
                   onReact={reactToMessage}

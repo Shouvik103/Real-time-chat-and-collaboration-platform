@@ -10,7 +10,7 @@ export default {
           active: '#3b3b45',
         },
         chat: {
-          DEFAULT: '#141414',
+          DEFAULT: '#000000',
           surface: '#1e1e24',
           border: '#2e2e38',
         },

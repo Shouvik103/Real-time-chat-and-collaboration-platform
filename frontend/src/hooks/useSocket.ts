@@ -2,6 +2,7 @@ import { useEffect, useCallback } from 'react';
 import { io, Socket } from 'socket.io-client';
 import { useAuthStore } from '@/store/authStore';
 import { useChatStore } from '@/store/chatStore';
+import { useUiStore } from '@/store/uiStore';
 import type { Message, OnlineUser, TypingEvent, PresenceUpdate } from '@/types';
 
 // ── Singleton socket ────────────────────────────────────────────────────────
@@ -86,6 +87,20 @@ export function useSocket() {
 
     socket.on('online_users', (users: OnlineUser[]) => {
       store().setOnlineUsers(users);
+    });
+
+    socket.on('new_notification', (notification) => {
+      // Increment unread count globally
+      const { unreadCount, setUnreadCount } = useUiStore.getState();
+      setUnreadCount(unreadCount + 1);
+
+      // Only toast if we are not actively viewing the channel where the notification came from
+      const activeChannel = useChatStore.getState().activeChannelId;
+      if (notification.data?.channelId !== activeChannel) {
+        import('react-hot-toast').then(({ default: toast }) => {
+          toast.success(notification.title, { icon: '💬' });
+        });
+      }
     });
 
     // Cleanup: only disconnect when the LAST consumer unmounts

@@ -5,6 +5,7 @@ import { shouldNotify } from '../services/preference.service';
 import { sendMulticast } from '../services/firebase.service';
 import { logger } from '../utils/logger';
 import { PrismaClient } from '@prisma/client';
+import { socketEmitter } from '../config/redis';
 
 const prisma = new PrismaClient();
 const MAX_RETRIES = 3;
@@ -68,13 +69,15 @@ const handleNewMessage = async (event: NewMessageEvent): Promise<void> => {
         const canNotify = await shouldNotify(userId, channelId);
         if (!canNotify) continue;
 
-        await createNotification({
+        const notification = await createNotification({
             userId,
             type: 'new_message',
             title: `New message from ${senderName}`,
             body: preview,
             data: { messageId, channelId, senderId, type: 'new_message' },
         });
+
+        socketEmitter.to(userId).emit('new_notification', notification);
 
         const tokens = await getDeviceTokens(userId);
         if (tokens.length > 0) {
@@ -99,13 +102,15 @@ const handleMention = async (event: MentionEvent): Promise<void> => {
 
     const preview = truncate(content, 100);
 
-    await createNotification({
+    const notification = await createNotification({
         userId: mentionedUserId,
         type: 'mention',
         title: `${senderName} mentioned you`,
         body: preview,
         data: { messageId, channelId, senderId, type: 'mention' },
     });
+
+    socketEmitter.to(mentionedUserId).emit('new_notification', notification);
 
     const tokens = await getDeviceTokens(mentionedUserId);
     if (tokens.length > 0) {
@@ -125,13 +130,15 @@ const handleChannelInvite = async (event: ChannelInviteEvent): Promise<void> => 
     const canNotify = await shouldNotify(invitedUserId);
     if (!canNotify) return;
 
-    await createNotification({
+    const notification = await createNotification({
         userId: invitedUserId,
         type: 'channel_invite',
         title: 'Channel Invitation',
         body: `${inviterName} invited you to #${channelName}`,
         data: { channelId, inviterName, type: 'channel_invite' },
     });
+
+    socketEmitter.to(invitedUserId).emit('new_notification', notification);
 
     const tokens = await getDeviceTokens(invitedUserId);
     if (tokens.length > 0) {

@@ -36,6 +36,9 @@ const sanitiseUser = (user: {
     email: string;
     displayName: string;
     avatarUrl: string | null;
+    description: string | null;
+    dob: string | null;
+    gender: string | null;
     status: string;
     provider: string;
     createdAt: Date;
@@ -45,6 +48,9 @@ const sanitiseUser = (user: {
     email: user.email,
     displayName: user.displayName,
     avatarUrl: user.avatarUrl,
+    description: user.description,
+    dob: user.dob,
+    gender: user.gender,
     status: user.status,
     provider: user.provider,
     createdAt: user.createdAt,

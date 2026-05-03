@@ -48,7 +48,11 @@ export const registerMessageHandlers = (io: Server, socket: AuthenticatedSocket)
             io.to(payload.channelId).emit('new_message', message);
 
             // 4. Publish to RabbitMQ for notification service
-            publishNewMessage(message);
+            // Important: We send the plaintext payload.content to RabbitMQ so the notification preview is readable!
+            publishNewMessage({
+                ...message.toObject(),
+                content: payload.content
+            } as any);
         } catch (err) {
             logger.error('send_message error', { error: (err as Error).message });
             socket.emit('error_event', { event: 'send_message', message: 'Failed to send message' });
