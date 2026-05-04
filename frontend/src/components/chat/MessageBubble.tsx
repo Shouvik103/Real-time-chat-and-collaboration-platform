@@ -63,21 +63,11 @@ export function MessageBubble({
         )}
       >
         {/* Sender name (above bubble) */}
-        {showAvatar && (!isOwn || message.edited) && (
-          <div
-            className={clsx(
-              'flex items-baseline gap-2 mb-1',
-              isOwn ? 'flex-row-reverse' : 'flex-row',
-            )}
-          >
-            {!isOwn && (
-              <span className="text-xs font-semibold text-slate-300">
-                {message.senderName}
-              </span>
-            )}
-            {message.edited && (
-              <span className="text-[10px] text-slate-600">(edited)</span>
-            )}
+        {showAvatar && !isOwn && (
+          <div className="flex items-baseline gap-2 mb-1 flex-row">
+            <span className="text-xs font-semibold text-slate-300">
+              {message.senderName}
+            </span>
           </div>
         )}
 
@@ -90,7 +80,15 @@ export function MessageBubble({
               : 'bg-[#2a2d36] text-slate-200 border-slate-600 rounded-bl-sm',
           )}
         >
-          {message.content}
+          <div>{message.content}</div>
+          {message.edited && (
+            <div className={clsx(
+              "text-[10px] mt-1 italic",
+              isOwn ? "text-blue-200/80 text-right" : "text-slate-400 text-right"
+            )}>
+              (edited)
+            </div>
+          )}
 
           {/* Hover actions inside bubble area */}
           {isOwn && (
@@ -116,6 +114,18 @@ export function MessageBubble({
               </button>
             </div>
           )}
+
+          {/* Timestamp absolutely positioned next to the bubble */}
+          <div 
+            className={clsx(
+              "absolute top-1/2 -translate-y-1/2 opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity flex items-center",
+              isOwn ? "right-full mr-2" : "left-full ml-2"
+            )}
+          >
+            <time className="text-[10px] text-slate-500 whitespace-nowrap">
+              {formatMessageTime(message.createdAt)}
+            </time>
+          </div>
         </div>
 
         {/* Reactions */}
@@ -138,13 +148,6 @@ export function MessageBubble({
             ))}
           </div>
         )}
-      </div>
-
-      {/* Timestamp for all messages */}
-      <div className="flex flex-col justify-center opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
-        <time className="text-[10px] text-slate-500 whitespace-nowrap px-1">
-          {formatMessageTime(message.createdAt)}
-        </time>
       </div>
     </div>
   );

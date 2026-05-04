@@ -287,7 +287,7 @@ export function Sidebar() {
     <aside
       className={clsx(
         'flex h-screen flex-col bg-sidebar border-r border-chat-border transition-all duration-200',
-        sidebarOpen ? 'w-72' : 'w-0 overflow-hidden',
+        sidebarOpen ? 'w-80' : 'w-0 overflow-hidden',
       )}
     >
       {/* Header */}
