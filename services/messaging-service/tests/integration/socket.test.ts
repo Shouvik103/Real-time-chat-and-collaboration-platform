@@ -19,12 +19,20 @@ jest.mock('../../src/services/message.service', () => ({
     type: 'text',
     reactions: [],
     deleted: false,
+    toObject: function() { return this; }
   }),
   editMessage: jest.fn().mockResolvedValue({
     _id: 'msg-id-1',
     channelId: 'ch-1',
     content: 'updated',
     editedAt: new Date(),
+    toJSON: function() { 
+      const copy = { ...this };
+      copy.id = copy._id;
+      delete copy._id;
+      delete copy.toJSON;
+      return copy; 
+    }
   }),
   softDeleteMessage: jest.fn().mockResolvedValue({
     _id: 'msg-id-1',
@@ -196,9 +204,9 @@ describe('Socket.IO Integration', () => {
       });
     });
 
-    it('should edit a message and receive message_edited event', (done) => {
-      client.on('message_edited', (data) => {
-        expect(data.messageId).toBe('msg-id-1');
+    it('should edit a message and receive message_updated event', (done) => {
+      client.on('message_updated', (data) => {
+        expect(data.id).toBe('msg-id-1');
         done();
       });
 
