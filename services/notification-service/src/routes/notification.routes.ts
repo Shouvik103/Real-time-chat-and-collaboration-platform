@@ -12,6 +12,7 @@ import {
     getNotificationsHandler,
     markReadHandler,
     markAllReadHandler,
+    markChannelReadHandler,
     getUnreadCountHandler,
     registerTokenHandler,
     unregisterTokenHandler,
@@ -27,6 +28,7 @@ router.use(authenticate);
 router.get('/notifications', validate(notificationsQuerySchema), getNotificationsHandler);
 router.get('/notifications/unread-count', getUnreadCountHandler);
 router.patch('/notifications/read-all', markAllReadHandler);
+router.patch('/notifications/channel/:channelId/read', markChannelReadHandler);
 router.patch('/notifications/:id/read', validate(notificationIdParamSchema), markReadHandler);
 
 // Device tokens

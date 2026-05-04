@@ -21,6 +21,15 @@ export default defineConfig({
         target: 'http://localhost:3002',
         changeOrigin: true,
         ws: true,
+        configure: (proxy, _options) => {
+          proxy.on('error', (err: any, _req, _res) => {
+            if (err.code === 'ECONNREFUSED') {
+              // Suppress connection refused errors during backend startup
+              return;
+            }
+            console.log('proxy error', err);
+          });
+        },
       },
     },
   },

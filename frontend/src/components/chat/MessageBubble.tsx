@@ -62,8 +62,8 @@ export function MessageBubble({
           isOwn ? 'items-end' : 'items-start',
         )}
       >
-        {/* Sender name + time (above bubble) */}
-        {showAvatar && (
+        {/* Sender name (above bubble) */}
+        {showAvatar && (!isOwn || message.edited) && (
           <div
             className={clsx(
               'flex items-baseline gap-2 mb-1',
@@ -75,9 +75,6 @@ export function MessageBubble({
                 {message.senderName}
               </span>
             )}
-            <time className="text-[11px] text-slate-500">
-              {formatMessageTime(message.createdAt)}
-            </time>
             {message.edited && (
               <span className="text-[10px] text-slate-600">(edited)</span>
             )}
@@ -141,6 +138,13 @@ export function MessageBubble({
             ))}
           </div>
         )}
+      </div>
+
+      {/* Timestamp for all messages */}
+      <div className="flex flex-col justify-center opacity-100 md:opacity-0 group-hover:opacity-100 transition-opacity">
+        <time className="text-[10px] text-slate-500 whitespace-nowrap px-1">
+          {formatMessageTime(message.createdAt)}
+        </time>
       </div>
     </div>
   );

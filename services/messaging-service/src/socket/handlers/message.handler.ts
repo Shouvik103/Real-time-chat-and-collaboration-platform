@@ -73,11 +73,7 @@ export const registerMessageHandlers = (io: Server, socket: AuthenticatedSocket)
                 return;
             }
 
-            io.to(updated.channelId).emit('message_edited', {
-                messageId: updated._id.toString(),
-                content: updated.content,
-                editedAt: updated.editedAt,
-            });
+            io.to(updated.channelId).emit('message_updated', updated.toJSON());
         } catch (err) {
             logger.error('edit_message error', { error: (err as Error).message });
             socket.emit('error_event', { event: 'edit_message', message: 'Failed to edit message' });

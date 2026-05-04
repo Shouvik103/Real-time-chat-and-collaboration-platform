@@ -19,7 +19,6 @@ const PresenceSchema = new Schema<IPresence>(
     { timestamps: true },
 );
 
-PresenceSchema.index({ userId: 1 });
 PresenceSchema.index({ channels: 1 });
 
 export const Presence = mongoose.model<IPresence>('Presence', PresenceSchema);

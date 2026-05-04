@@ -10,15 +10,18 @@
 
 ## Start all 3 local services (kills any existing instances first)
 dev:
-	@echo "Killing any processes on ports 3001, 3002, 5173..."
+	@echo "Killing any processes on ports 3001, 3002, 3004, 5173..."
 	@lsof -ti:3001 | xargs kill -9 2>/dev/null; true
 	@lsof -ti:3002 | xargs kill -9 2>/dev/null; true
+	@lsof -ti:3004 | xargs kill -9 2>/dev/null; true
 	@lsof -ti:5173 | xargs kill -9 2>/dev/null; true
 	@sleep 1
 	@echo "Starting auth-service on :3001..."
 	@cd services/auth-service && npx tsx watch index.ts &
 	@echo "Starting messaging-service on :3002..."
 	@cd services/messaging-service && npx tsx watch index.ts &
+	@echo "Starting notification-service on :3004..."
+	@cd services/notification-service && npx tsx watch index.ts &
 	@echo "Starting frontend on :5173..."
 	@cd frontend && npx vite &
 	@echo "✅ All services started. Logs are in the background."
@@ -27,6 +30,7 @@ dev:
 dev-stop:
 	@lsof -ti:3001 | xargs kill -9 2>/dev/null; true
 	@lsof -ti:3002 | xargs kill -9 2>/dev/null; true
+	@lsof -ti:3004 | xargs kill -9 2>/dev/null; true
 	@lsof -ti:5173 | xargs kill -9 2>/dev/null; true
 	@echo "✅ All dev services stopped."
 

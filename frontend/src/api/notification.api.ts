@@ -5,15 +5,18 @@ export const notificationApi = {
   getNotifications: (page = 1, limit = 20) =>
     api.get<{ data: { notifications: Notification[]; total: number } }>(
       '/api/notify/notifications',
-      { params: { page, limit } },
+      { params: { page, limit, _t: Date.now() } },
     ),
 
   getUnreadCount: () =>
-    api.get<{ data: { count: number } }>('/api/notify/notifications/unread-count'),
+    api.get<{ data: { unreadCount: number; channelCounts: Record<string, number>; workspaceCounts: Record<string, number> } }>('/api/notify/notifications/unread-count'),
 
   markRead: (notificationId: string) =>
-    api.patch(`/api/notify/notifications/${notificationId}`, { isRead: true }),
+    api.patch(`/api/notify/notifications/${notificationId}/read`),
+
+  markChannelRead: (channelId: string) =>
+    api.patch(`/api/notify/notifications/channel/${channelId}/read`),
 
   markAllRead: () =>
-    api.patch('/api/notify/notifications', { isRead: true }),
+    api.patch('/api/notify/notifications/read-all'),
 };

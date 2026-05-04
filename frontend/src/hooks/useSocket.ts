@@ -90,13 +90,33 @@ export function useSocket() {
     });
 
     socket.on('new_notification', (notification) => {
-      // Increment unread count globally
-      const { unreadCount, setUnreadCount } = useUiStore.getState();
-      setUnreadCount(unreadCount + 1);
-
-      // Only toast if we are not actively viewing the channel where the notification came from
       const activeChannel = useChatStore.getState().activeChannelId;
-      if (notification.data?.channelId !== activeChannel) {
+      
+      if (notification.data?.channelId === activeChannel) {
+        // If we are already viewing the channel, mark it as read immediately
+        // and do NOT increment the unread count or show a toast.
+        import('@/api/notification.api').then(({ notificationApi }) => {
+          notificationApi.markRead(notification.id).catch(() => {});
+        });
+      } else {
+        // Increment unread count globally
+        const { unreadCount, setUnreadCount, channelUnreadCounts, setChannelUnreadCounts, workspaceUnreadCounts, setWorkspaceUnreadCounts } = useUiStore.getState();
+        setUnreadCount(unreadCount + 1);
+        
+        if (notification.data?.channelId) {
+          setChannelUnreadCounts({
+            ...channelUnreadCounts,
+            [notification.data.channelId as string]: (channelUnreadCounts[notification.data.channelId as string] || 0) + 1
+          });
+        }
+        
+        if (notification.data?.workspaceId) {
+          setWorkspaceUnreadCounts({
+            ...workspaceUnreadCounts,
+            [notification.data.workspaceId as string]: (workspaceUnreadCounts[notification.data.workspaceId as string] || 0) + 1
+          });
+        }
+
         import('react-hot-toast').then(({ default: toast }) => {
           toast.success(notification.title, { icon: '💬' });
         });
@@ -143,6 +163,14 @@ export function useSocket() {
     globalSocket?.emit('react_to_message', { messageId, emoji });
   }, []);
 
+  const editMessage = useCallback((messageId: string, content: string) => {
+    globalSocket?.emit('edit_message', { messageId, content });
+  }, []);
+
+  const deleteMessage = useCallback((messageId: string) => {
+    globalSocket?.emit('delete_message', { messageId });
+  }, []);
+
   return {
     socket: globalSocket,
     joinChannel,
@@ -151,5 +179,7 @@ export function useSocket() {
     startTyping,
     stopTyping,
     reactToMessage,
+    editMessage,
+    deleteMessage,
   };
 }

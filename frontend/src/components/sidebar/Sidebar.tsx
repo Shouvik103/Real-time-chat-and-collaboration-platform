@@ -22,6 +22,7 @@ import { UserInfo } from './UserInfo';
 import { Modal } from '@/components/ui/Modal';
 import { Input } from '@/components/ui/Input';
 import { Button } from '@/components/ui/Button';
+import { Avatar } from '@/components/ui/Avatar';
 import type { Workspace } from '@/types';
 
 export function Sidebar() {
@@ -45,6 +46,7 @@ export function Sidebar() {
     setInviteMemberModalOpen,
     joinByCodeModalOpen,
     setJoinByCodeModalOpen,
+    workspaceUnreadCounts,
   } = useUiStore();
 
   const [contextMenuWs, setContextMenuWs] = useState<string | null>(null);
@@ -120,6 +122,15 @@ export function Sidebar() {
       if (other) return other.displayName[0]?.toUpperCase() ?? '?';
     }
     return '?';
+  };
+
+  /** Get avatar url for a DM workspace */
+  const getDmAvatarUrl = (ws: Workspace) => {
+    if (ws.members && currentUser) {
+      const other = ws.members.find((m) => m.id !== currentUser.id);
+      if (other) return other.avatarUrl;
+    }
+    return null;
   };
 
   const selectWorkspace = (ws: Workspace) => {
@@ -324,6 +335,11 @@ export function Sidebar() {
                         {ws.name}
                       </p>
                     </div>
+                    {workspaceUnreadCounts[ws.id] > 0 && (
+                      <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                        {workspaceUnreadCounts[ws.id]}
+                      </span>
+                    )}
                   </button>
                   {/* Context menu button */}
                   <button
@@ -412,6 +428,7 @@ export function Sidebar() {
               dms.map((ws) => {
                 const displayName = getDmDisplayName(ws);
                 const avatarLetter = getDmAvatar(ws);
+                const avatarUrl = getDmAvatarUrl(ws);
                 const isWaiting = ws.members && ws.members.length < 2;
                 return (
                   <div key={ws.id} className="group relative">
@@ -424,8 +441,12 @@ export function Sidebar() {
                           : 'hover:bg-sidebar-hover',
                       )}
                     >
-                      <div className="h-10 w-10 rounded-full bg-emerald-600/20 flex items-center justify-center text-sm font-bold text-emerald-400 shrink-0">
-                        {avatarLetter}
+                      <div className="shrink-0">
+                        <Avatar
+                          name={displayName}
+                          src={avatarUrl}
+                          size="md"
+                        />
                       </div>
                       <div className="min-w-0 flex-1 text-left">
                         <p className={clsx(
@@ -438,6 +459,11 @@ export function Sidebar() {
                           <p className="text-xs text-slate-500 truncate">Share the invite code</p>
                         )}
                       </div>
+                      {workspaceUnreadCounts[ws.id] > 0 && (
+                        <span className="ml-auto bg-red-500 text-white text-[10px] font-bold px-2 py-0.5 rounded-full">
+                          {workspaceUnreadCounts[ws.id]}
+                        </span>
+                      )}
                     </button>
                     {/* DM context actions */}
                     <button

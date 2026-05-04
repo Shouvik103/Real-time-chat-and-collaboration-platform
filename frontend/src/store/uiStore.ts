@@ -10,6 +10,8 @@ interface UiState {
   createDmModalOpen: boolean;
   profileModalOpen: boolean;
   unreadCount: number;
+  channelUnreadCounts: Record<string, number>;
+  workspaceUnreadCounts: Record<string, number>;
 
   setSidebarOpen: (open: boolean) => void;
   toggleSidebar: () => void;
@@ -21,6 +23,8 @@ interface UiState {
   setCreateDmModalOpen: (open: boolean) => void;
   setProfileModalOpen: (open: boolean) => void;
   setUnreadCount: (count: number) => void;
+  setChannelUnreadCounts: (counts: Record<string, number>) => void;
+  setWorkspaceUnreadCounts: (counts: Record<string, number>) => void;
 }
 
 export const useUiStore = create<UiState>()((set) => ({
@@ -33,6 +37,8 @@ export const useUiStore = create<UiState>()((set) => ({
   createDmModalOpen: false,
   profileModalOpen: false,
   unreadCount: 0,
+  channelUnreadCounts: {},
+  workspaceUnreadCounts: {},
 
   setSidebarOpen: (open) => set({ sidebarOpen: open }),
   toggleSidebar: () => set((state) => ({ sidebarOpen: !state.sidebarOpen })),
@@ -44,4 +50,6 @@ export const useUiStore = create<UiState>()((set) => ({
   setCreateDmModalOpen: (open) => set({ createDmModalOpen: open }),
   setProfileModalOpen: (open) => set({ profileModalOpen: open }),
   setUnreadCount: (count) => set({ unreadCount: count }),
+  setChannelUnreadCounts: (counts) => set({ channelUnreadCounts: counts }),
+  setWorkspaceUnreadCounts: (counts) => set({ workspaceUnreadCounts: counts }),
 }));

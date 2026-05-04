@@ -13,6 +13,7 @@ import { TypingIndicator } from './TypingIndicator';
 import { Spinner } from '@/components/ui/Spinner';
 import { isSameDay, formatDateDivider } from '@/utils/dateFormat';
 import { UserGroupIcon, ChatBubbleLeftRightIcon } from '@heroicons/react/24/outline';
+import { Avatar } from '@/components/ui/Avatar';
 import type { Message } from '@/types';
 
 export function ChatArea() {
@@ -24,7 +25,7 @@ export function ChatArea() {
   );
   const setMessages = useChatStore((s) => s.setMessages);
   const prependMessages = useChatStore((s) => s.prependMessages);
-  const { joinChannel, leaveChannel, reactToMessage } = useSocket();
+  const { joinChannel, leaveChannel, reactToMessage, deleteMessage: socketDeleteMessage } = useSocket();
   const queryClient = useQueryClient();
 
   /** Get the display name for the current conversation */
@@ -38,6 +39,18 @@ export function ChatArea() {
       return 'Direct Message';
     }
     return activeWorkspace.name;
+  };
+
+  /** Get the avatar URL for the current DM conversation */
+  const getConversationAvatarUrl = () => {
+    if (!activeWorkspace) return null;
+    if (activeWorkspace.type === 'DM') {
+      if (activeWorkspace.members && currentUser) {
+        const other = activeWorkspace.members.find((m) => m.id !== currentUser.id);
+        if (other) return other.avatarUrl;
+      }
+    }
+    return null;
   };
 
   // ─── Message history via React Query ─────────────────────────────────
@@ -60,7 +73,21 @@ export function ChatArea() {
   const prevChannelId = useRef<string | null>(null);
   useEffect(() => {
     if (prevChannelId.current) leaveChannel(prevChannelId.current);
-    if (activeChannelId) joinChannel(activeChannelId);
+    if (activeChannelId) {
+      joinChannel(activeChannelId);
+      // Mark channel as read and update global unread count
+      import('@/api/notification.api').then(({ notificationApi }) => {
+        notificationApi.markChannelRead(activeChannelId).then(() => {
+          notificationApi.getUnreadCount().then((res) => {
+            import('@/store/uiStore').then(({ useUiStore }) => {
+              useUiStore.getState().setUnreadCount(res.data.data.unreadCount);
+              useUiStore.getState().setChannelUnreadCounts(res.data.data.channelCounts || {});
+              useUiStore.getState().setWorkspaceUnreadCounts(res.data.data.workspaceCounts || {});
+            });
+          });
+        }).catch(() => {});
+      });
+    }
     prevChannelId.current = activeChannelId;
   }, [activeChannelId, joinChannel, leaveChannel]);
 
@@ -88,17 +115,10 @@ export function ChatArea() {
   // ─── Edit / Delete mutations ──────────────────────────────────────────
   const [editingMessage, setEditingMessage] = useState<Message | null>(null);
 
-  const deleteMutation = useMutation({
-    mutationFn: (messageId: string) => messageApi.deleteMessage(messageId),
-    onSuccess: () => {
-      queryClient.invalidateQueries({ queryKey: ['messages', activeChannelId] });
-      toast.success('Message deleted');
-    },
-  });
-
   const handleDelete = (msg: Message) => {
     if (window.confirm('Delete this message?')) {
-      deleteMutation.mutate(msg.id);
+      socketDeleteMessage(msg.id);
+      toast.success('Message deleted');
     }
   };
 
@@ -163,12 +183,16 @@ export function ChatArea() {
   const conversationName = getConversationName();
 
   return (
-    <div className="flex flex-1 flex-col min-w-0">
+    <div className="flex flex-1 flex-col min-w-0 min-h-0 relative">
       {/* Conversation header */}
       <header className="flex items-center gap-3 border-b border-chat-border px-4 py-3 bg-chat flex-shrink-0">
         {isDm ? (
-          <div className="h-8 w-8 rounded-full bg-emerald-600/20 flex items-center justify-center text-sm font-bold text-emerald-400 shrink-0">
-            {conversationName[0]?.toUpperCase() ?? '?'}
+          <div className="shrink-0">
+            <Avatar
+              name={conversationName}
+              src={getConversationAvatarUrl()}
+              size="sm"
+            />
           </div>
         ) : (
           <div className="h-8 w-8 rounded-full bg-brand/20 flex items-center justify-center shrink-0">
@@ -178,76 +202,81 @@ export function ChatArea() {
         <h2 className="text-sm font-semibold text-white">{conversationName}</h2>
       </header>
 
-      {/* Messages */}
-      <div
-        ref={scrollRef}
-        onScroll={handleScroll}
-        className="flex-1 overflow-y-auto py-2 chat-bubble-pattern"
-      >
-        {isFetchingNextPage && (
-          <div className="flex justify-center py-3">
-            <Spinner className="h-5 w-5 text-brand" />
-          </div>
-        )}
+      {/* Messages Area */}
+      <div className="flex-1 relative overflow-hidden chat-bubble-pattern">
+        <div
+          ref={scrollRef}
+          onScroll={handleScroll}
+          className="h-full w-full overflow-y-auto py-2 relative z-10"
+        >
+          {isFetchingNextPage && (
+            <div className="flex justify-center py-3">
+              <Spinner className="h-5 w-5 text-brand" />
+            </div>
+          )}
 
-        {isLoading ? (
-          <div className="flex justify-center py-10">
-            <Spinner className="h-6 w-6 text-brand" />
-          </div>
-        ) : storeMessages.length === 0 ? (
-          <div className="flex flex-col items-center justify-center py-20 gap-2">
-            <ChatBubbleLeftRightIcon className="h-8 w-8 text-slate-600" />
-            <p className="text-sm text-slate-500">
-              No messages yet. Start the conversation!
-            </p>
-          </div>
-        ) : (
-          storeMessages.map((msg, i) => {
-            const prev = storeMessages[i - 1];
-            const showAvatar =
-              !prev ||
-              prev.senderId !== msg.senderId ||
-              !isSameDay(prev.createdAt, msg.createdAt);
+          {isLoading ? (
+            <div className="flex justify-center py-10">
+              <Spinner className="h-6 w-6 text-brand" />
+            </div>
+          ) : storeMessages.length === 0 ? (
+            <div className="flex flex-col items-center justify-center py-20 gap-2">
+              <ChatBubbleLeftRightIcon className="h-8 w-8 text-slate-600" />
+              <p className="text-sm text-slate-500">
+                No messages yet. Start the conversation!
+              </p>
+            </div>
+          ) : (
+            storeMessages.map((msg, i) => {
+              const prev = storeMessages[i - 1];
+              const showAvatar =
+                !prev ||
+                prev.senderId !== msg.senderId ||
+                !isSameDay(prev.createdAt, msg.createdAt);
 
-            // Date divider
-            const showDivider =
-              !prev || !isSameDay(prev.createdAt, msg.createdAt);
+              // Date divider
+              const showDivider =
+                !prev || !isSameDay(prev.createdAt, msg.createdAt);
 
-            const isCurrentUser = currentUser?.id === msg.senderId;
-            const currentAvatarUrl = isCurrentUser
-              ? currentUser?.avatarUrl
-              : activeWorkspace?.members?.find((m) => m.id === msg.senderId)?.avatarUrl;
+              const isCurrentUser = currentUser?.id === msg.senderId;
+              const currentAvatarUrl = isCurrentUser
+                ? currentUser?.avatarUrl
+                : activeWorkspace?.members?.find((m) => m.id === msg.senderId)?.avatarUrl;
 
-            return (
-              <div key={msg.id}>
-                {showDivider && (
-                  <div className="flex items-center gap-3 px-4 my-3">
-                    <div className="flex-1 border-t border-chat-border" />
-                    <span className="text-xs font-medium text-slate-500">
-                      {formatDateDivider(msg.createdAt)}
-                    </span>
-                    <div className="flex-1 border-t border-chat-border" />
-                  </div>
-                )}
-                <MessageBubble
-                  message={msg}
-                  showAvatar={showAvatar}
-                  currentAvatarUrl={currentAvatarUrl}
-                  onEdit={setEditingMessage}
-                  onDelete={handleDelete}
-                  onReact={reactToMessage}
-                />
-              </div>
-            );
-          })
-        )}
+              return (
+                <div key={msg.id}>
+                  {showDivider && (
+                    <div className="flex items-center gap-3 px-4 my-3">
+                      <div className="flex-1 border-t border-chat-border" />
+                      <span className="text-xs font-medium text-slate-500">
+                        {formatDateDivider(msg.createdAt)}
+                      </span>
+                      <div className="flex-1 border-t border-chat-border" />
+                    </div>
+                  )}
+                  <MessageBubble
+                    message={msg}
+                    showAvatar={showAvatar}
+                    currentAvatarUrl={currentAvatarUrl}
+                    onEdit={setEditingMessage}
+                    onDelete={handleDelete}
+                    onReact={reactToMessage}
+                  />
+                </div>
+              );
+            })
+          )}
+        </div>
       </div>
 
       {/* Typing indicator */}
       <TypingIndicator />
 
       {/* Input */}
-      <MessageInput />
+      <MessageInput 
+        editingMessage={editingMessage}
+        onCancelEdit={() => setEditingMessage(null)}
+      />
     </div>
   );
 }

@@ -1,4 +1,5 @@
-import { useState, useRef, useCallback, KeyboardEvent, ChangeEvent } from 'react';
+import { useState, useRef, useCallback, KeyboardEvent, ChangeEvent, useEffect } from 'react';
+import { XMarkIcon } from '@heroicons/react/24/outline';
 import {
   PaperAirplaneIcon,
   PaperClipIcon,
@@ -8,10 +9,16 @@ import EmojiPicker, { EmojiClickData, Theme } from 'emoji-picker-react';
 import { fileApi } from '@/api/file.api';
 import { useChatStore } from '@/store/chatStore';
 import { useSocket } from '@/hooks/useSocket';
+import type { Message } from '@/types';
 
-export function MessageInput() {
+interface MessageInputProps {
+  editingMessage?: Message | null;
+  onCancelEdit?: () => void;
+}
+
+export function MessageInput({ editingMessage, onCancelEdit }: MessageInputProps) {
   const activeChannelId = useChatStore((s) => s.activeChannelId);
-  const { sendMessage, startTyping, stopTyping } = useSocket();
+  const { sendMessage, editMessage, startTyping, stopTyping } = useSocket();
 
   const [text, setText] = useState('');
   const [uploading, setUploading] = useState(false);
@@ -21,6 +28,15 @@ export function MessageInput() {
   const typingTimeout = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isTyping = useRef(false);
 
+  useEffect(() => {
+    if (editingMessage) {
+      setText(editingMessage.content);
+      textareaRef.current?.focus();
+    } else {
+      setText('');
+    }
+  }, [editingMessage]);
+
   const handleEmojiClick = (emojiData: EmojiClickData) => {
     setText((prev) => prev + emojiData.emoji);
     setShowEmojiPicker(false);
@@ -29,13 +45,20 @@ export function MessageInput() {
 
   const handleSend = useCallback(() => {
     if (!text.trim() || !activeChannelId) return;
-    sendMessage(activeChannelId, text.trim());
+    
+    if (editingMessage) {
+      editMessage(editingMessage.id, text.trim());
+      onCancelEdit?.();
+    } else {
+      sendMessage(activeChannelId, text.trim());
+    }
+    
     setText('');
     if (isTyping.current) {
       stopTyping(activeChannelId);
       isTyping.current = false;
     }
-  }, [text, activeChannelId, sendMessage, stopTyping]);
+  }, [text, activeChannelId, sendMessage, editMessage, stopTyping, editingMessage, onCancelEdit]);
 
   const handleKeyDown = (e: KeyboardEvent<HTMLTextAreaElement>) => {
     if (e.key === 'Enter' && !e.shiftKey) {
@@ -82,7 +105,17 @@ export function MessageInput() {
   if (!activeChannelId) return null;
 
   return (
-    <div className="border-t border-chat-border bg-chat p-3 relative">
+    <div className="border-t border-chat-border bg-chat p-3 relative flex flex-col gap-2">
+      {/* Editing header */}
+      {editingMessage && (
+        <div className="flex items-center justify-between bg-brand/10 text-brand-light px-3 py-1.5 rounded-md text-xs font-medium border border-brand/20">
+          <span>Editing message</span>
+          <button onClick={onCancelEdit} className="text-brand-light hover:text-white transition-colors p-0.5 rounded-full hover:bg-brand/20">
+            <XMarkIcon className="h-4 w-4" />
+          </button>
+        </div>
+      )}
+
       {/* Emoji Picker */}
       {showEmojiPicker && (
         <div className="absolute bottom-16 left-3 z-50">

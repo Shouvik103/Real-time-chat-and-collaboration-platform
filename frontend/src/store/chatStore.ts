@@ -90,7 +90,7 @@ export const useChatStore = create<ChatState>()((set) => ({
         messages: {
           ...state.messages,
           [message.channelId]: existing.map((m) =>
-            m.id === message.id ? message : m,
+            m.id === message.id ? { ...m, ...message } : m,
           ),
         },
       };

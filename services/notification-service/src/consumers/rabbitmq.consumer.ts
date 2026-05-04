@@ -52,19 +52,19 @@ const handleNewMessage = async (event: NewMessageEvent): Promise<void> => {
     const { channelId, senderId, senderName, content, messageId } = event;
 
     // Fetch channel members (except sender) from the shared workspace_members / channels table
-    // Since auth-service owns the schema, we query the same PostgreSQL database
-    const members: Array<{ user_id: string }> = await prisma.$queryRaw`
-        SELECT DISTINCT wm.user_id
+    const members: Array<{ userId: string, workspaceId: string }> = await prisma.$queryRaw`
+        SELECT DISTINCT wm."userId" as "userId", c."workspaceId" as "workspaceId"
         FROM workspace_members wm
-        INNER JOIN channels c ON c.workspace_id = wm.workspace_id
-        WHERE c.id = ${channelId}::uuid
-          AND wm.user_id != ${senderId}::uuid
+        INNER JOIN channels c ON c."workspaceId" = wm."workspaceId"
+        WHERE c.id = ${channelId}
+          AND wm."userId" != ${senderId}
     `;
 
     const preview = truncate(content, 100);
 
     for (const member of members) {
-        const userId = member.user_id;
+        const userId = member.userId;
+        const workspaceId = member.workspaceId;
 
         const canNotify = await shouldNotify(userId, channelId);
         if (!canNotify) continue;
@@ -74,7 +74,7 @@ const handleNewMessage = async (event: NewMessageEvent): Promise<void> => {
             type: 'new_message',
             title: `New message from ${senderName}`,
             body: preview,
-            data: { messageId, channelId, senderId, type: 'new_message' },
+            data: { messageId, channelId, workspaceId, senderId, type: 'new_message' },
         });
 
         socketEmitter.to(userId).emit('new_notification', notification);

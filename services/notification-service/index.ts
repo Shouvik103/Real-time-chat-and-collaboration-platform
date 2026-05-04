@@ -3,6 +3,7 @@
 // Connects to PostgreSQL, RabbitMQ & Firebase, starts Express + consumer
 // =============================================================================
 
+import 'dotenv/config';
 import app from './src/app';
 import { logger } from './src/utils/logger';
 import { connectRabbitMQ, closeRabbitMQ } from './src/config/rabbitmq';

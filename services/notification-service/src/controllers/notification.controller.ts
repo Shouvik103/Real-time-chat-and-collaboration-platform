@@ -41,12 +41,44 @@ export const markAllReadHandler = async (req: Request, res: Response, next: Next
     } catch (err) { next(err); }
 };
 
+// ──── Mark Channel as Read ──────────────────────────────────────────────────
+export const markChannelReadHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
+    try {
+        if (!req.user) { sendError(res, 'UNAUTHORIZED', 'Authentication required', 401); return; }
+        const { channelId } = req.params;
+        const { prismaClient } = await import('../services/notification.service');
+        const result = await prismaClient.notification.updateMany({
+            where: { userId: req.user.id, isRead: false, data: { path: ['channelId'], equals: channelId } },
+            data: { isRead: true },
+        });
+        sendSuccess(res, { markedRead: result.count });
+    } catch (err) { next(err); }
+};
+
 // ──── Unread Count ──────────────────────────────────────────────────────────
 export const getUnreadCountHandler = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
     try {
         if (!req.user) { sendError(res, 'UNAUTHORIZED', 'Authentication required', 401); return; }
         const count = await getUnreadCount(req.user.id);
-        sendSuccess(res, { unreadCount: count });
+        
+        // Also get per-channel and per-workspace unread counts
+        const { prismaClient } = await import('../services/notification.service');
+        const countsRaw = await prismaClient.$queryRaw<{ channelId: string, workspaceId: string, count: bigint }[]>`
+            SELECT data->>'channelId' as "channelId", data->>'workspaceId' as "workspaceId", COUNT(*) as count
+            FROM notifications
+            WHERE user_id = ${req.user.id}::uuid AND is_read = false
+            GROUP BY data->>'channelId', data->>'workspaceId'
+        `;
+        
+        const channelCounts: Record<string, number> = {};
+        const workspaceCounts: Record<string, number> = {};
+        for (const row of countsRaw) {
+            const cnt = Number(row.count);
+            if (row.channelId) channelCounts[row.channelId] = cnt;
+            if (row.workspaceId) workspaceCounts[row.workspaceId] = (workspaceCounts[row.workspaceId] || 0) + cnt;
+        }
+
+        sendSuccess(res, { unreadCount: count, channelCounts, workspaceCounts });
     } catch (err) { next(err); }
 };
 

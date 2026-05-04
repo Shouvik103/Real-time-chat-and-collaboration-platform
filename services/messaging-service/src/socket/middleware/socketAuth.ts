@@ -37,7 +37,7 @@ export const socketAuth = (socket: Socket, next: (err?: Error) => void): void =>
 
         next();
     } catch (err) {
-        logger.warn('Socket auth failed', { error: (err as Error).message });
+        logger.debug('Socket auth failed', { error: (err as Error).message });
         next(new Error('Invalid or expired token'));
     }
 };
