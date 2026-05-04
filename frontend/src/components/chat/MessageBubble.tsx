@@ -49,7 +49,7 @@ export function MessageBubble({
         {showAvatar && (
           <Avatar
             name={message.senderName}
-            src={currentAvatarUrl ?? message.senderAvatar}
+            src={currentAvatarUrl !== undefined ? currentAvatarUrl : message.senderAvatar}
             size="md"
           />
         )}

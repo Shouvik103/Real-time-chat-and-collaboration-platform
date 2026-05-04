@@ -67,6 +67,8 @@ export function Sidebar() {
         const stillExists = wsData.find((w) => w.id === activeWorkspace.id);
         if (!stillExists && wsData.length > 0) {
           setActiveWorkspace(wsData[0]);
+        } else if (stillExists) {
+          useChatStore.setState({ activeWorkspace: stillExists });
         }
       }
     }

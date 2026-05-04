@@ -178,13 +178,13 @@ export const getWorkspaces = async (
             // For DM workspaces, include members so the frontend can show the other person's name
             return {
                 ...ws,
-                members: ws.type === 'DM' ? ws.members.map((mem) => ({
+                members: ws.members.map((mem) => ({
                     id: mem.user.id,
                     displayName: mem.user.displayName,
                     avatarUrl: mem.user.avatarUrl,
                     email: mem.user.email,
                     role: mem.role,
-                })) : undefined,
+                })),
             };
         });
         sendSuccess(res, { workspaces });
