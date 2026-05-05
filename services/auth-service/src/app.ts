@@ -19,10 +19,17 @@ const app = express();
 
 // ── Security ────────────────────────────────────────────────────────────────
 
-app.use(helmet());
+app.use(helmet({
+    contentSecurityPolicy: {
+        directives: {
+            ...helmet.contentSecurityPolicy.getDefaultDirectives(),
+            'upgrade-insecure-requests': null, // Disable — we serve HTTP in prod
+        },
+    },
+}));
 app.use(
     cors({
-        origin: process.env.CORS_ORIGIN || 'http://localhost:5173',
+        origin: process.env.CORS_ORIGIN || process.env.FRONTEND_URL || 'http://localhost:5173',
         credentials: true,
     }),
 );
