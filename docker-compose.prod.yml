@@ -1,128 +1,10 @@
 # =============================================================================
 # docker-compose.prod.yml — Production deployment for Chat Platform
-# Usage: docker-compose -f docker-compose.prod.yml up -d
+# Uses external cloud databases (Supabase, MongoDB Atlas, Upstash, CloudAMQP)
+# Usage: docker compose -f docker-compose.prod.yml up -d
 # =============================================================================
 
 services:
-  # ─── Infrastructure ──────────────────────────────────────────────────────
-
-  postgres:
-    image: postgres:16-alpine
-    container_name: chat-postgres
-    restart: always
-    environment:
-      POSTGRES_USER: ${POSTGRES_USER}
-      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD}
-      POSTGRES_DB: ${POSTGRES_DB}
-    volumes:
-      - postgres_data:/var/lib/postgresql/data
-    networks:
-      - chat-network
-    healthcheck:
-      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER} -d ${POSTGRES_DB}"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-
-  mongodb:
-    image: mongo:7
-    container_name: chat-mongodb
-    restart: always
-    environment:
-      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
-      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
-      MONGO_INITDB_DATABASE: ${MONGO_INITDB_DATABASE}
-    volumes:
-      - mongo_data:/data/db
-    networks:
-      - chat-network
-    healthcheck:
-      test: ["CMD", "mongosh", "--quiet", "--eval", "db.adminCommand('ping')"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: "1.0"
-          memory: 512M
-
-  redis:
-    image: redis:7-alpine
-    container_name: chat-redis
-    restart: always
-    command: ["redis-server", "--appendonly", "yes", "--requirepass", "${REDIS_PASSWORD}"]
-    volumes:
-      - redis_data:/data
-    networks:
-      - chat-network
-    healthcheck:
-      test: ["CMD", "redis-cli", "-a", "${REDIS_PASSWORD}", "ping"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 10s
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: chat-rabbitmq
-    restart: always
-    environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    networks:
-      - chat-network
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-
-  minio:
-    image: minio/minio:latest
-    container_name: chat-minio
-    restart: always
-    command: server /data --console-address ":9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
-    volumes:
-      - minio_data:/data
-    networks:
-      - chat-network
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
-    deploy:
-      resources:
-        limits:
-          cpus: "0.5"
-          memory: 256M
-
   # ─── Application Services ───────────────────────────────────────────────
 
   auth-service:
@@ -133,22 +15,15 @@ services:
     restart: always
     env_file: .env.prod
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
       NODE_ENV: production
     networks:
       - chat-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3001/health || exit 1"]
-      interval: 15s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
     deploy:
       resources:
         limits:
@@ -163,27 +38,19 @@ services:
     restart: always
     env_file: .env.prod
     environment:
-      MONGODB_URI: mongodb://${MONGO_INITDB_ROOT_USERNAME}:${MONGO_INITDB_ROOT_PASSWORD}@mongodb:27017/${MONGO_INITDB_DATABASE}?authSource=admin
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
       ENCRYPTION_ENGINE_HOST: encryption-engine
       ENCRYPTION_ENGINE_PORT: "50051"
       NODE_ENV: production
     networks:
       - chat-network
     depends_on:
-      mongodb:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      rabbitmq:
-        condition: service_healthy
+      - encryption-engine
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3002/health || exit 1"]
-      interval: 15s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
     deploy:
       resources:
         limits:
@@ -219,28 +86,15 @@ services:
     restart: always
     env_file: .env.prod
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      MINIO_ENDPOINT: minio
-      MINIO_PORT: "9000"
-      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER}
-      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD}
       NODE_ENV: production
     networks:
       - chat-network
-    depends_on:
-      postgres:
-        condition: service_healthy
-      redis:
-        condition: service_healthy
-      minio:
-        condition: service_healthy
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
-      interval: 15s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
     deploy:
       resources:
         limits:
@@ -255,25 +109,17 @@ services:
     restart: always
     env_file: .env.prod
     environment:
-      DATABASE_URL: postgresql://${POSTGRES_USER}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB}?schema=public
-      REDIS_URL: redis://:${REDIS_PASSWORD}@redis:6379
-      RABBITMQ_URL: amqp://${RABBITMQ_DEFAULT_USER}:${RABBITMQ_DEFAULT_PASS}@rabbitmq:5672
       NODE_ENV: production
     networks:
       - chat-network
     depends_on:
-      rabbitmq:
-        condition: service_healthy
-      postgres:
-        condition: service_healthy
-      messaging-service:
-        condition: service_healthy
+      - messaging-service
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3004/health || exit 1"]
-      interval: 15s
-      timeout: 5s
+      interval: 30s
+      timeout: 10s
       retries: 3
-      start_period: 30s
+      start_period: 40s
     deploy:
       resources:
         limits:
@@ -314,16 +160,11 @@ services:
     networks:
       - chat-network
     depends_on:
-      auth-service:
-        condition: service_healthy
-      messaging-service:
-        condition: service_healthy
-      file-service:
-        condition: service_healthy
-      notification-service:
-        condition: service_healthy
-      frontend:
-        condition: service_healthy
+      - auth-service
+      - messaging-service
+      - file-service
+      - notification-service
+      - frontend
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:80/health || exit 1"]
       interval: 15s
@@ -335,13 +176,6 @@ services:
         limits:
           cpus: "0.25"
           memory: 128M
-
-volumes:
-  postgres_data:
-  mongo_data:
-  redis_data:
-  rabbitmq_data:
-  minio_data:
 
 networks:
   chat-network:
