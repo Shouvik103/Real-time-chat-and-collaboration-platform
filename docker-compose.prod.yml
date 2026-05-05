@@ -86,9 +86,16 @@ services:
     restart: always
     env_file: .env.prod
     environment:
+      MINIO_ENDPOINT: minio
+      MINIO_API_PORT: "9000"
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+      MINIO_USE_SSL: "false"
       NODE_ENV: production
     networks:
       - chat-network
+    depends_on:
+      - minio
     healthcheck:
       test: ["CMD-SHELL", "wget -qO- http://localhost:3003/health || exit 1"]
       interval: 30s
@@ -100,6 +107,30 @@ services:
         limits:
           cpus: "0.5"
           memory: 256M
+
+  minio:
+    image: minio/minio:latest
+    container_name: chat-minio
+    restart: always
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD}
+    volumes:
+      - minio_data:/data
+    networks:
+      - chat-network
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+      start_period: 20s
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5"
+          memory: 128M
 
   notification-service:
     build:
@@ -177,6 +208,10 @@ services:
           cpus: "0.25"
           memory: 128M
 
+volumes:
+  minio_data:
+
 networks:
   chat-network:
     driver: bridge
+
