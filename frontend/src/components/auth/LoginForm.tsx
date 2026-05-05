@@ -57,7 +57,7 @@ export function LoginForm() {
 
       <div className="grid grid-cols-2 gap-3">
         <a
-          href="http://localhost:3001/api/auth/google"
+          href="/api/auth/google"
           className="flex items-center justify-center gap-2 h-10 rounded-full border border-white/10 bg-white/5 text-sm font-medium text-slate-200 hover:bg-white/10 hover:border-white/20 transition-all duration-200"
         >
           <svg className="h-5 w-5" viewBox="0 0 24 24">
