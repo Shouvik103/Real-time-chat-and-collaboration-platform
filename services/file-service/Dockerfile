@@ -25,8 +25,8 @@ WORKDIR /app
 
 ENV NODE_ENV=production
 
-# sharp runtime dependency
-RUN apk add --no-cache vips
+# sharp + OpenSSL runtime dependencies (OpenSSL required by Prisma)
+RUN apk add --no-cache vips openssl
 
 COPY --from=builder /app/dist ./dist
 COPY --from=builder /app/node_modules ./node_modules
