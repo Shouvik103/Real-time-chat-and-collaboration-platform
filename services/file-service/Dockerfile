@@ -7,8 +7,8 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
-# Install build deps for sharp (native addon)
-RUN apk add --no-cache python3 make g++ vips-dev
+# Install build deps for sharp (native addon) + OpenSSL for Prisma
+RUN apk add --no-cache python3 make g++ vips-dev openssl
 
 COPY package*.json ./
 RUN npm ci

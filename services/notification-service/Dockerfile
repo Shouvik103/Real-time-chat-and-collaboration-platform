@@ -7,6 +7,9 @@ FROM node:20-alpine AS builder
 
 WORKDIR /app
 
+# Install OpenSSL so Prisma detects the correct engine binary
+RUN apk add --no-cache openssl
+
 COPY package*.json ./
 RUN npm ci
 
