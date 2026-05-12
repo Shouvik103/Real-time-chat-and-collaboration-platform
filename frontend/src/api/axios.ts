@@ -11,7 +11,7 @@ const api = axios.create({
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
-    config.headers.Authorization = \`Bearer \${token}\`;
+    config.headers.Authorization = `Bearer ${token}`;
   }
   return config;
 });
@@ -29,7 +29,7 @@ api.interceptors.response.use(
       if (!refreshing) {
         refreshing = axios
           .post(
-            \`\${import.meta.env.VITE_API_URL || ''}/api/auth/refresh\`,
+            `${import.meta.env.VITE_API_URL || ''}/api/auth/refresh`,
             {},
             { withCredentials: true },
           )
@@ -48,7 +48,7 @@ api.interceptors.response.use(
       }
 
       const newToken = await refreshing;
-      original.headers.Authorization = \`Bearer \${newToken}\`;
+      original.headers.Authorization = `Bearer ${newToken}`;
       return api(original);
     }
     return Promise.reject(error);
@@ -56,3 +56,4 @@ api.interceptors.response.use(
 );
 
 export default api;
+
