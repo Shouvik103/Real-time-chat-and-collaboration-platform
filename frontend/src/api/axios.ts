@@ -2,21 +2,21 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
 const api = axios.create({
-  baseURL: '/',
-  withCredentials: true, // send httpOnly refresh cookie
+  baseURL: import.meta.env.VITE_API_URL || '/',
+  withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
 
-// ─── Request interceptor: attach Bearer token ─────────────────────────────
+// Request interceptor: attach Bearer token
 api.interceptors.request.use((config) => {
   const token = useAuthStore.getState().accessToken;
   if (token) {
-    config.headers.Authorization = `Bearer ${token}`;
+    config.headers.Authorization = \`Bearer \${token}\`;
   }
   return config;
 });
 
-// ─── Response interceptor: auto-refresh on 401 ───────────────────────────
+// Response interceptor: auto-refresh on 401
 let refreshing: Promise<string> | null = null;
 
 api.interceptors.response.use(
@@ -28,12 +28,12 @@ api.interceptors.response.use(
 
       if (!refreshing) {
         refreshing = axios
-          .post<{ data: { accessToken: string } }>(
-            '/api/auth/refresh',
+          .post(
+            \`\${import.meta.env.VITE_API_URL || ''}/api/auth/refresh\`,
             {},
             { withCredentials: true },
           )
-          .then((res) => {
+          .then((res: any) => {
             const newToken = res.data.data.accessToken;
             useAuthStore.getState().updateAccessToken(newToken);
             refreshing = null;
@@ -48,7 +48,7 @@ api.interceptors.response.use(
       }
 
       const newToken = await refreshing;
-      original.headers.Authorization = `Bearer ${newToken}`;
+      original.headers.Authorization = \`Bearer \${newToken}\`;
       return api(original);
     }
     return Promise.reject(error);
