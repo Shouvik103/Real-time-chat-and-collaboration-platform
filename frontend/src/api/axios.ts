@@ -2,7 +2,7 @@ import axios from 'axios';
 import { useAuthStore } from '@/store/authStore';
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_URL || '/',
+  baseURL: (import.meta as any).env.VITE_API_URL || '/',
   withCredentials: true,
   headers: { 'Content-Type': 'application/json' },
 });
@@ -29,7 +29,7 @@ api.interceptors.response.use(
       if (!refreshing) {
         refreshing = axios
           .post(
-            `${import.meta.env.VITE_API_URL || ''}/api/auth/refresh`,
+            `${(import.meta as any).env.VITE_API_URL || ''}/api/auth/refresh`,
             {},
             { withCredentials: true },
           )
