@@ -1,10 +1,28 @@
-# Real-Time Chat & Collaboration Platform
+# 💬 InsTalk — Real-Time Chat & Collaboration Platform
 
 A production-ready, microservices-based real-time chat platform built with **TypeScript**, **React**, **Socket.IO**, **gRPC**, and **Docker**.
 
+> 🌐 **Live Demo**: [https://real-time-chat-and-c-git-2f035e-sontudas17102003-9041s-projects.vercel.app](https://real-time-chat-and-c-git-2f035e-sontudas17102003-9041s-projects.vercel.app)
+
 ---
 
-## Architecture
+## ✨ Features
+
+- **Real-time Messaging** — Instant message delivery via WebSockets (Socket.IO)
+- **End-to-End Encryption** — AES-256-GCM encryption with LZ4 compression via a C++ gRPC engine
+- **Google OAuth** — One-click sign-in with Google
+- **Workspaces & Channels** — Create team workspaces with public/private channels
+- **Typing Indicators** — See when others are typing in real-time
+- **Online Presence** — Live online/offline status for all users
+- **Message Reactions** — React to messages with emojis
+- **File Uploads** — Share images and files via MinIO (S3-compatible) storage
+- **Push Notifications** — In-app notifications via RabbitMQ event bus
+- **Profile Management** — Avatar uploads, bio, and user settings
+- **Dark Mode UI** — Sleek, modern dark-themed interface
+
+---
+
+## 🏗️ Architecture
 
 ```
 ┌──────────────┐     ┌──────────────┐     ┌──────────────────┐
@@ -18,8 +36,8 @@ A production-ready, microservices-based real-time chat platform built with **Typ
      ┌────────▼──────┐  ┌──▼───────┐  ┌──▼──────────────┐
      │  Messaging    │  │  File    │  │  Notification   │
      │  Service      │  │  Service │  │  Service        │
-     │  Socket.IO    │  │  Multer  │  │  Firebase + FCM │
-     │  MongoDB      │  │  MinIO   │  │  RabbitMQ       │
+     │  Socket.IO    │  │  Multer  │  │  RabbitMQ       │
+     │  MongoDB      │  │  MinIO   │  │  Prisma         │
      └───────┬───────┘  │  Sharp   │  └─────────────────┘
              │          └──────────┘
      ┌───────▼───────┐
@@ -38,8 +56,8 @@ A production-ready, microservices-based real-time chat platform built with **Typ
 | **Messaging Service** | 3002 | Express, Socket.IO, MongoDB, Redis, RabbitMQ | Real-time messaging, typing indicators, presence, reactions |
 | **Encryption Engine** | 50051 | C++, gRPC, OpenSSL, LZ4 | AES-256-GCM encryption with LZ4 compression |
 | **File Service** | 3003 | Express, Multer, Sharp, MinIO, Prisma | File upload/download, image processing, thumbnails |
-| **Notification Service** | 3004 | Express, RabbitMQ, Firebase/FCM, Prisma | Push notifications, in-app notifications, email |
-| **Frontend** | 5173 (dev) / 80 (prod) | React 18, TypeScript, Vite, Tailwind CSS | SPA with real-time chat UI |
+| **Notification Service** | 3004 | Express, RabbitMQ, Prisma | Push notifications, in-app notifications |
+| **Frontend** | 5173 | React 18, TypeScript, Vite, Tailwind CSS | SPA with real-time chat UI |
 
 ### Infrastructure
 
@@ -50,278 +68,195 @@ A production-ready, microservices-based real-time chat platform built with **Typ
 | **Redis 7** | JWT blacklist, refresh tokens, Socket.IO pub/sub adapter |
 | **RabbitMQ 3.13** | Event bus between messaging → notification service |
 | **MinIO** | S3-compatible object storage for file uploads |
-| **Nginx** | Reverse proxy, SSL termination, rate limiting, WebSocket upgrade |
+| **Nginx** | Reverse proxy, WebSocket upgrade |
 
 ---
 
-## Quick Start
+## 🚀 How to Run Locally
 
 ### Prerequisites
 
-- **Docker** & **Docker Compose** v2+
-- **Node.js** 20+ and **npm** (for local development)
-- **Make** (optional, for shortcut commands)
+Make sure you have these installed on your machine:
 
-### 1. Clone the repository
+- [Docker](https://docs.docker.com/get-docker/) & [Docker Compose](https://docs.docker.com/compose/install/) v2+
+- [Node.js](https://nodejs.org/) 20+ and **npm**
+- [Git](https://git-scm.com/)
+
+### Step 1 — Clone the Repository
 
 ```bash
 git clone https://github.com/Shouvik103/Real-time-chat-and-collaboration-platform.git
 cd Real-time-chat-and-collaboration-platform/chat-platform
 ```
 
-### 2. Set up environment variables
+### Step 2 — Configure Environment Variables
 
 ```bash
 cp .env.example .env
 ```
 
-Edit `.env` with your values (see `.env.example` for all required variables).
+Open the `.env` file and replace all `CHANGE_ME_*` values:
 
-### 3. Start with Docker (development)
+| Variable | What to Put |
+|----------|-------------|
+| `POSTGRES_PASSWORD` | Any strong password (e.g. `MyP0stgres!2026`) |
+| `MONGO_INITDB_ROOT_PASSWORD` | Any strong password |
+| `REDIS_PASSWORD` | Any strong password |
+| `RABBITMQ_DEFAULT_PASS` | Any strong password |
+| `MINIO_ROOT_PASSWORD` | Min 8 characters |
+| `JWT_SECRET` | A random 32+ character string |
+| `JWT_REFRESH_SECRET` | A different random 32+ character string |
+| `MASTER_KEY` | A 64-character hex string |
+
+> **⚠️ Important**: After changing passwords, you must also update the connection URLs that contain those passwords:
+> - `DATABASE_URL` — update the password in the PostgreSQL connection string
+> - `MONGO_URI` / `MONGODB_URI` — update the password in both MongoDB connection strings
+> - `REDIS_URL` — update the password in the Redis connection string
+> - `RABBITMQ_URL` — update the password in the RabbitMQ connection string
+
+**Google OAuth (optional):**
+1. Go to [Google Cloud Console](https://console.cloud.google.com/) → **APIs & Services** → **Credentials**
+2. Create an **OAuth 2.0 Client ID** (Web application)
+3. Add `http://localhost` to **Authorized JavaScript origins**
+4. Add `http://localhost/api/auth/google/callback` to **Authorized redirect URIs**
+5. Copy the Client ID and Client Secret into `GOOGLE_CLIENT_ID` and `GOOGLE_CLIENT_SECRET` in your `.env`
+
+### Step 3 — Start All Infrastructure
+
+This will spin up PostgreSQL, MongoDB, Redis, RabbitMQ, and MinIO:
 
 ```bash
-# Start all infrastructure + services
-make up
-
-# Or without Make:
-docker-compose up --build
+docker-compose up -d
 ```
 
-### 4. Run database migrations
+Wait about 30 seconds, then verify all containers are healthy:
 
 ```bash
-# In a new terminal
-make migrate
+docker-compose ps
+```
 
-# Or manually:
+All containers should show `healthy` status.
+
+### Step 4 — Install Dependencies
+
+```bash
+# Auth Service
+cd services/auth-service && npm install && cd ../..
+
+# Messaging Service
+cd services/messaging-service && npm install && cd ../..
+
+# File Service
+cd services/file-service && npm install && cd ../..
+
+# Notification Service
+cd services/notification-service && npm install && cd ../..
+
+# Frontend
+cd frontend && npm install && cd ..
+```
+
+### Step 5 — Run Database Migrations
+
+```bash
+# Auth Service (creates users, workspaces, channels tables)
 cd services/auth-service
+npx prisma generate --schema=src/prisma/schema.prisma
 npx prisma migrate dev --schema=src/prisma/schema.prisma
+cd ../..
+
+# File Service
+cd services/file-service
+npx prisma generate --schema=src/prisma/schema.prisma
+npx prisma migrate dev --schema=src/prisma/schema.prisma
+cd ../..
+
+# Notification Service
+cd services/notification-service
+npx prisma generate --schema=src/prisma/schema.prisma
+npx prisma migrate dev --schema=src/prisma/schema.prisma
+cd ../..
 ```
 
-### 5. Seed demo data (optional)
+### Step 6 — Seed Demo Data (Optional)
 
 ```bash
-make seed
-
-# Demo accounts (password: Demo@Pass1):
-#   alice@demo.com  — workspace owner
-#   bob@demo.com    — team member
-#   charlie@demo.com — team member
+cd services/auth-service
+npx ts-node prisma/seed.ts
+cd ../..
 ```
 
-### 6. Open the app
+This creates 3 demo accounts you can use to test:
 
-- **Frontend**: http://localhost:5173
-- **Auth API**: http://localhost:3001/health
-- **Messaging API**: http://localhost:3002/health
-- **File API**: http://localhost:3003/health
-- **Notification API**: http://localhost:3004/health
+| Email | Password | Role |
+|-------|----------|------|
+| `alice@demo.com` | `Demo@Pass1` | Workspace Owner |
+| `bob@demo.com` | `Demo@Pass1` | Team Member |
+| `charlie@demo.com` | `Demo@Pass1` | Team Member |
 
----
+### Step 7 — Start All Services
 
-## Production Deployment
+Open **5 separate terminal windows** and run one command in each:
 
-### Using Docker Compose
-
+**Terminal 1 — Auth Service:**
 ```bash
-# Create production env file
-cp .env.example .env.prod
-# Edit .env.prod with production values (strong passwords, real domains, etc.)
-
-# Start production stack
-make prod
-
-# Or manually:
-docker-compose -f docker-compose.prod.yml up -d --build
+cd services/auth-service && npm run dev
 ```
 
-### SSL/TLS Setup
-
-1. Update `nginx/nginx.prod.conf` — replace `chat.example.com` with your domain
-2. Obtain certificates with [certbot](https://certbot.eff.org/):
-   ```bash
-   certbot certonly --webroot -w /var/www/certbot -d yourdomain.com
-   ```
-3. Mount certificate volume in `docker-compose.prod.yml`
-
-### CI/CD
-
-The project includes a GitHub Actions pipeline (`.github/workflows/ci-cd.yml`) that:
-
-1. **Lint & Typecheck** — All services in parallel (matrix strategy)
-2. **Test** — Auth + Messaging service tests with coverage
-3. **Build & Push** — Docker images to `ghcr.io` (on main branch)
-4. **Deploy** — SSH to production server, pull images, run migrations, restart
-
-Required GitHub Secrets:
-- `DEPLOY_HOST`, `DEPLOY_USER`, `DEPLOY_SSH_KEY`, `DEPLOY_PATH`
-
----
-
-## API Reference
-
-### Auth Service (`/api/auth`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| POST | `/api/auth/register` | No | Register a new account |
-| POST | `/api/auth/login` | No | Login with email/password |
-| POST | `/api/auth/logout` | Yes | Logout (blacklist token) |
-| POST | `/api/auth/refresh` | No | Rotate refresh token |
-| GET | `/api/auth/me` | Yes | Get current user + workspaces |
-| GET | `/api/auth/google` | No | Start Google OAuth flow |
-| GET | `/api/auth/github` | No | Start GitHub OAuth flow |
-
-### User Service (`/api/users`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/users/profile/:userId` | Yes | Get user profile |
-| PATCH | `/api/users/profile` | Yes | Update own profile |
-| PATCH | `/api/users/profile/avatar` | Yes | Update avatar URL |
-| GET | `/api/users/workspaces` | Yes | List user's workspaces |
-| POST | `/api/users/workspaces` | Yes | Create a workspace |
-| GET | `/api/users/workspaces/:id/channels` | Yes | List channels in workspace |
-| POST | `/api/users/workspaces/:id/channels` | Yes | Create a channel |
-
-### Messages Service (`/api/messages`)
-
-| Method | Endpoint | Auth | Description |
-|--------|----------|------|-------------|
-| GET | `/api/messages/:channelId` | No* | Get messages (cursor pagination) |
-
-*Query params: `?cursor=<lastId>&limit=20`
-
-### WebSocket Events (Socket.IO)
-
-**Client → Server:**
-
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `send_message` | `{ channelId, content, type?, fileId? }` | Send a message |
-| `edit_message` | `{ messageId, content }` | Edit a message |
-| `delete_message` | `{ messageId }` | Soft-delete a message |
-| `react_to_message` | `{ messageId, emoji }` | Toggle reaction |
-| `join_channel` | `{ channelId }` | Join a channel room |
-| `leave_channel` | `{ channelId }` | Leave a channel room |
-| `typing_start` | `{ channelId }` | Start typing indicator |
-| `typing_stop` | `{ channelId }` | Stop typing indicator |
-| `user_online` | — | Signal online status |
-| `user_offline` | — | Signal offline status |
-
-**Server → Client:**
-
-| Event | Payload | Description |
-|-------|---------|-------------|
-| `new_message` | `Message` | New message in channel |
-| `message_edited` | `{ messageId, content, editedAt }` | Message was edited |
-| `message_deleted` | `{ messageId }` | Message was deleted |
-| `reaction_updated` | `{ messageId, reactions }` | Reactions changed |
-| `user_typing` | `{ userId, username, channelId }` | User is typing |
-| `user_stop_typing` | `{ userId, username, channelId }` | User stopped typing |
-| `user_online` | `{ userId }` | User came online |
-| `user_offline` | `{ userId }` | User went offline |
-| `error_event` | `{ event, message }` | Operation failed |
-
-**Connection:**
-```javascript
-import { io } from 'socket.io-client';
-
-const socket = io('http://localhost:3002', {
-  auth: { token: '<JWT access token>' },
-  transports: ['websocket'],
-});
-```
-
----
-
-## Testing
-
+**Terminal 2 — Messaging Service:**
 ```bash
-# Run all tests
-make test
-
-# Auth service with coverage
-make test-auth-cov
-
-# Messaging service with coverage
-make test-messaging-cov
-
-# Or directly:
-cd services/auth-service && npm test -- --coverage
-cd services/messaging-service && npm test -- --coverage
+cd services/messaging-service && npm run dev
 ```
 
-### Test Structure
-
-```
-services/auth-service/tests/
-├── unit/
-│   ├── jwt.service.test.ts         # JWT sign, verify, blacklist, rotation
-│   ├── password.service.test.ts    # bcrypt hash & compare
-│   └── auth.validator.test.ts      # Zod schema validation
-└── integration/
-    ├── auth.routes.test.ts         # Register, login, logout, refresh, me
-    └── user.routes.test.ts         # Profile, workspaces, channels
-
-services/messaging-service/tests/
-├── unit/
-│   ├── message.service.test.ts     # CRUD, reactions, pagination
-│   └── encryption.service.test.ts  # gRPC encrypt/decrypt mock
-└── integration/
-    ├── message.routes.test.ts      # REST pagination endpoint
-    └── socket.test.ts              # Socket.IO auth, events, typing
-```
-
----
-
-## Make Commands
-
+**Terminal 3 — File Service:**
 ```bash
-make help          # Show all available commands
-make up            # Start dev stack
-make down          # Stop dev stack
-make prod          # Start production stack
-make test          # Run all tests
-make test-auth-cov # Auth tests with coverage
-make migrate       # Run Prisma migrations
-make seed          # Seed demo data
-make studio        # Open Prisma Studio
-make shell-auth    # Shell into auth container
-make shell-postgres # Open psql session
-make clean         # Remove everything
+cd services/file-service && npm run dev
 ```
+
+**Terminal 4 — Notification Service:**
+```bash
+cd services/notification-service && npm run dev
+```
+
+**Terminal 5 — Frontend:**
+```bash
+cd frontend && npm run dev
+```
+
+### Step 8 — Open the App
+
+Open your browser and go to:
+
+🔗 **http://localhost:5173**
+
+Register a new account or use the demo credentials from Step 6. That's it — you're chatting! 🎉
 
 ---
 
-## Project Structure
+## 📂 Project Structure
 
 ```
 chat-platform/
 ├── .github/workflows/ci-cd.yml    # GitHub Actions CI/CD
-├── docker-compose.yml             # Development stack
+├── docker-compose.yml             # Infrastructure (databases, queues)
 ├── docker-compose.prod.yml        # Production stack
-├── Makefile                       # Dev/prod shortcut commands
+├── Makefile                       # Shortcut commands
+├── .env.example                   # Environment variable template
 ├── nginx/
-│   ├── nginx.conf                 # Dev reverse proxy
-│   └── nginx.prod.conf            # Prod (SSL, security headers)
+│   ├── nginx.conf                 # Dev reverse proxy config
+│   └── nginx.prod.conf            # Production config (SSL)
 ├── frontend/                      # React SPA
-│   ├── Dockerfile
 │   ├── src/
-│   │   ├── api/                   # Axios clients
+│   │   ├── api/                   # Axios API clients
 │   │   ├── components/            # UI components
-│   │   ├── hooks/                 # Custom hooks (useSocket, useMessages)
+│   │   ├── hooks/                 # Custom hooks (useSocket, useAuth)
 │   │   ├── pages/                 # Route pages
-│   │   ├── stores/                # Zustand state management
+│   │   ├── store/                 # Zustand state management
 │   │   └── types/                 # TypeScript interfaces
 │   └── ...
 └── services/
     ├── auth-service/              # Authentication & user management
-    │   ├── Dockerfile
-    │   ├── jest.config.js
-    │   ├── prisma/
-    │   │   ├── schema.prisma
-    │   │   └── seed.ts
+    │   ├── src/prisma/schema.prisma
     │   ├── src/
     │   │   ├── controllers/
     │   │   ├── middleware/
@@ -329,19 +264,13 @@ chat-platform/
     │   │   ├── services/
     │   │   └── validators/
     │   └── tests/
-    │       ├── unit/
-    │       └── integration/
     ├── messaging-service/         # Real-time messaging
-    │   ├── Dockerfile
-    │   ├── jest.config.js
     │   ├── src/
     │   │   ├── models/
     │   │   ├── routes/
     │   │   ├── services/
     │   │   └── socket/
     │   └── tests/
-    │       ├── unit/
-    │       └── integration/
     ├── encryption-engine/         # C++ gRPC encryption
     ├── file-service/              # File upload & processing
     └── notification-service/      # Push notifications
@@ -349,63 +278,7 @@ chat-platform/
 
 ---
 
-## Troubleshooting
-
-### Common Issues
-
-**Docker containers won't start:**
-```bash
-# Check for port conflicts
-lsof -i :3001 -i :3002 -i :3003 -i :3004 -i :5432 -i :27017 -i :6379
-
-# Rebuild everything from scratch
-make clean && make up
-```
-
-**Database connection errors:**
-```bash
-# Ensure PostgreSQL is healthy
-docker-compose ps postgres
-docker-compose logs postgres
-
-# Re-run migrations
-make migrate
-```
-
-**Socket.IO connection fails:**
-- Ensure the JWT token is valid and not expired
-- Check CORS settings in `SOCKET_CORS_ORIGIN`
-- Verify WebSocket upgrade is allowed through proxy
-
-**Tests failing:**
-```bash
-# Install test dependencies first
-cd services/auth-service && npm install
-cd services/messaging-service && npm install
-
-# Run with verbose output
-cd services/auth-service && npx jest --verbose
-```
-
-**Redis connection refused:**
-```bash
-# Check Redis is running
-docker-compose logs redis
-
-# Verify REDIS_URL env var matches docker-compose service name
-# Should be: redis://:password@redis:6379
-```
-
-**Prisma schema out of sync:**
-```bash
-cd services/auth-service
-npx prisma generate --schema=src/prisma/schema.prisma
-npx prisma migrate dev --schema=src/prisma/schema.prisma
-```
-
----
-
-## Tech Stack
+## 🧰 Tech Stack
 
 | Category | Technology |
 |----------|-----------|
@@ -416,12 +289,18 @@ npx prisma migrate dev --schema=src/prisma/schema.prisma
 | **Message Broker** | RabbitMQ 3.13 |
 | **Object Storage** | MinIO (S3-compatible) |
 | **Auth** | JWT (access + refresh rotation), bcrypt, Passport.js (Google, GitHub OAuth) |
-| **Proxy** | Nginx (reverse proxy, SSL, rate limiting, WebSocket) |
+| **Proxy** | Nginx (reverse proxy, WebSocket support) |
 | **CI/CD** | GitHub Actions, Docker, ghcr.io |
 | **ORM** | Prisma (PostgreSQL), Mongoose (MongoDB) |
 
 ---
 
-## License
+## 👤 Author
+
+**Shouvik Das** — [@Shouvik103](https://github.com/Shouvik103)
+
+---
+
+## 📄 License
 
 This project is for educational and portfolio purposes.
