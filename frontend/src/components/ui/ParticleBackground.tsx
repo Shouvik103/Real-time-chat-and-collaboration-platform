@@ -92,8 +92,21 @@ export function ParticleBackground() {
       };
 
       for (let i = 0; i < numParticles; i++) {
-        const x = randInRange(edgePadding, canvas.width - edgePadding);
-        const y = randInRange(edgePadding, canvas.height - edgePadding);
+        let x = randInRange(edgePadding, canvas.width - edgePadding);
+        let y = randInRange(edgePadding, canvas.height - edgePadding);
+
+        const card = document.getElementById('login-card');
+        if (card) {
+          const rect = card.getBoundingClientRect();
+          const pad = edgePadding + 4;
+          if (x > rect.left - pad && x < rect.right + pad && y > rect.top - pad && y < rect.bottom + pad) {
+            if (Math.random() > 0.5) {
+              y = Math.random() > 0.5 ? randInRange(edgePadding, rect.top - pad) : randInRange(rect.bottom + pad, canvas.height - edgePadding);
+            } else {
+              x = Math.random() > 0.5 ? randInRange(edgePadding, rect.left - pad) : randInRange(rect.right + pad, canvas.width - edgePadding);
+            }
+          }
+        }
 
         const quad = x < canvas.width / 2 ? (y < canvas.height / 2 ? 'lt' : 'lb') : (y < canvas.height / 2 ? 'rt' : 'rb');
         particles.push(new Particle(x, y, quad as any));
@@ -127,7 +140,38 @@ export function ParticleBackground() {
           p.dy = -Math.abs(p.dy) * bounceDamping - edgeKick;
         }
 
-        // 2. Login card — no longer a boundary; particles flow freely behind it
+        // 2. Login Card boundaries (solid wall)
+        const card = document.getElementById('login-card');
+        if (card) {
+          const rect = card.getBoundingClientRect();
+          const pad = edgePadding + 4;
+          const minX = rect.left - pad;
+          const maxX = rect.right + pad;
+          const minY = rect.top - pad;
+          const maxY = rect.bottom + pad;
+
+          if (p.x > minX && p.x < maxX && p.y > minY && p.y < maxY) {
+            const distLeft = Math.abs(p.x - minX);
+            const distRight = Math.abs(maxX - p.x);
+            const distTop = Math.abs(p.y - minY);
+            const distBottom = Math.abs(maxY - p.y);
+            const minDist = Math.min(distLeft, distRight, distTop, distBottom);
+
+            if (minDist === distLeft) {
+              p.x = minX;
+              p.dx = -Math.abs(p.dx) * bounceDamping - edgeKick;
+            } else if (minDist === distRight) {
+              p.x = maxX;
+              p.dx = Math.abs(p.dx) * bounceDamping + edgeKick;
+            } else if (minDist === distTop) {
+              p.y = minY;
+              p.dy = -Math.abs(p.dy) * bounceDamping - edgeKick;
+            } else {
+              p.y = maxY;
+              p.dy = Math.abs(p.dy) * bounceDamping + edgeKick;
+            }
+          }
+        }
       };
 
       const dotRepelRadius = 100; // Axis repulsion radius in px
