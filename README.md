@@ -295,12 +295,6 @@ chat-platform/
 
 ---
 
-## 👤 Author
-
-**Shouvik Das** — [@Shouvik103](https://github.com/Shouvik103)
-
----
-
 ## 📄 License
 
-This project is for educational and portfolio purposes.
+This project is licensed under the [MIT License](LICENSE).
