@@ -13,14 +13,13 @@ export default function ChatPage() {
   // Establish socket connection
   useSocket();
 
-  // Refresh user data from server on mount — this re-fetches the avatarUrl
-  // that was stripped from localStorage by the partialize function in authStore
+  // Refresh user data + notification count in parallel on mount
   useEffect(() => {
     const { isAuthenticated, setAuth, accessToken } = useAuthStore.getState();
     if (!isAuthenticated || !accessToken) return;
 
-    // Fetch fresh user data
-    authApi
+    // Fire both requests simultaneously — saves ~1-2 seconds vs sequential
+    const userPromise = authApi
       .getMe()
       .then((res) => {
         const freshUser = res.data.data.user;
@@ -28,14 +27,15 @@ export default function ChatPage() {
       })
       .catch(() => {});
 
-    // Fetch initial notification count
-    import('@/api/notification.api').then(({ notificationApi }) => {
+    const notifPromise = import('@/api/notification.api').then(({ notificationApi }) =>
       notificationApi.getUnreadCount().then((res) => {
         useUiStore.getState().setUnreadCount(res.data.data.unreadCount);
         useUiStore.getState().setChannelUnreadCounts(res.data.data.channelCounts || {});
         useUiStore.getState().setWorkspaceUnreadCounts(res.data.data.workspaceCounts || {});
-      }).catch(() => {});
-    });
+      }).catch(() => {})
+    );
+
+    Promise.all([userPromise, notifPromise]);
   }, []);
 
   const sidebarOpen = useUiStore((s) => s.sidebarOpen);

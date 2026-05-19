@@ -57,7 +57,8 @@ export function Sidebar() {
   const { data: wsData } = useQuery({
     queryKey: ['workspaces'],
     queryFn: () => workspaceApi.getWorkspaces().then((r) => r.data.data.workspaces),
-    refetchInterval: 10000,
+    refetchInterval: 60_000,
+    staleTime: 30_000,
   });
 
   useEffect(() => {
@@ -80,6 +81,7 @@ export function Sidebar() {
   const { data: channelsData } = useQuery({
     queryKey: ['channels', activeWorkspace?.id],
     enabled: !!activeWorkspace,
+    staleTime: 30_000,
     queryFn: () =>
       workspaceApi
         .getChannels(activeWorkspace!.id)
