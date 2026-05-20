@@ -12,7 +12,6 @@ A production-ready, microservices-based real-time chat platform built with **Typ
 - **End-to-End Encryption** — AES-256-GCM encryption with LZ4 compression via a C++ gRPC engine
 - **Google OAuth** — One-click sign-in with Google
 - **Workspaces & Channels** — Create team workspaces with public/private channels
-- **Typing Indicators** — See when others are typing in real-time
 - **Online Presence** — Live online/offline status for all users
 - **Message Reactions** — React to messages with emojis
 - **File Uploads** — Share images and files via MinIO (S3-compatible) storage
