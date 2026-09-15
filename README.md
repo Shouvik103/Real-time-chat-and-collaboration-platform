@@ -1,66 +1,63 @@
-# 💬 InsTalk — Real-Time Chat & Collaboration Platform
+# InsTalk — Real-Time Chat & Collaboration Platform
 
 A modern, full-stack real-time collaboration platform featuring **React 18**, **Node.js/Express**, **Socket.IO**, **PostgreSQL**, **MongoDB**, **Redis**, and a high-performance **C++ Encryption Engine (gRPC)**.
 
-> 🌐 **Live Website**: [https://instalk.shouvik.tech](https://instalk.shouvik.tech)  
-> ☁️ **Cloud Backend**: [https://16-192-218-162.sslip.io](https://16-192-218-162.sslip.io/health) (AWS EC2 + Automated SSL)  
-> 🔗 **Alternative Vercel URL**: [https://real-time-chat-and-collaboration-platform-ezvymwggi.vercel.app](https://real-time-chat-and-collaboration-platform-ezvymwggi.vercel.app)
+> **Live Website**: [https://instalk.shouvik.tech](https://instalk.shouvik.tech)
 
 ---
 
-## ✨ Key Features & Capabilities
+## Key Features & Capabilities
 
-- **⚡ Instant Real-time Messaging** — Bi-directional WebSocket communication powered by Socket.IO with sub-50ms latency.
-- **🔒 C++ AES-256-GCM Encryption Engine** — Native C++ encryption microservice with LZ4 compression connected via high-throughput gRPC over port 50051. Messages are encrypted at rest in MongoDB.
-- **🏢 Multi-Tenant Workspaces & Channels** — Create and manage workspaces, public/private channels, direct messages (DMs), and shareable invite codes.
-- **🟢 Real-Time Presence System** — Live user status updates (Online, Away, Offline) with automated heartbeat tracking via Redis.
-- **⌨️ Live Typing Indicators** — Real-time visual feedback when members in a channel are composing messages.
-- **❤️ Interactive Emoji Reactions** — Expressive message reactions synced across all connected clients in real time.
-- **✏️ Message Editing & Soft Deletion** — Edit sent messages or delete them with instant updates pushed to all channel members.
-- **🛡️ Multi-Provider Authentication** — JWT access/refresh token rotation, bcrypt password hashing, and Google OAuth 2.0 sign-in.
-- **🎨 Modern Dark Glassmorphic UI** — Responsive interface built with React, Tailwind CSS, Lucide icons, and interactive particle canvas animations.
+- **Instant Real-time Messaging** — Bi-directional WebSocket communication powered by Socket.IO with sub-50ms latency.
+- **C++ AES-256-GCM Encryption Engine** — Native C++ encryption microservice with LZ4 compression connected via high-throughput gRPC over port 50051. Messages are encrypted at rest in MongoDB.
+- **Multi-Tenant Workspaces & Channels** — Create and manage workspaces, public/private channels, direct messages (DMs), and shareable invite codes.
+- **Real-Time Presence System** — Live user status updates (Online, Away, Offline) with automated heartbeat tracking via Redis.
+- **Live Typing Indicators** — Real-time visual feedback when members in a channel are composing messages.
+- **Interactive Emoji Reactions** — Expressive message reactions synced across all connected clients in real time.
+- **Message Editing & Soft Deletion** — Edit sent messages or delete them with instant updates pushed to all channel members.
+- **Multi-Provider Authentication** — JWT access/refresh token rotation, bcrypt password hashing, and Google OAuth 2.0 sign-in.
+- **Modern Dark Glassmorphic UI** — Responsive interface built with React, Tailwind CSS, Lucide icons, and interactive particle canvas animations.
 
 ---
 
-## 🏗️ Architecture & Infrastructure
+## Architecture & Infrastructure
 
 ```
-                                      🌐 INTERNET
-                                           │
-               ┌───────────────────────────┴───────────────────────────┐
-               ▼                                                       ▼
-      ┌─────────────────┐                                    ┌───────────────────┐
-      │  Vercel Edge    │                                    │   AWS EC2 Cloud   │
-      │   (Frontend)    │                                    │ (Stockholm Region)│
-      │instalk.         │                                    │16.192.218.162     │
-      │shouvik.tech     │                                    └─────────┬─────────┘
-      └────────┬────────┘                                              │
-               │ HTTPS / WSS                                           │ Port 80 / 443
-               └───────────────────────────────────────────┐           ▼
-                                                           │  ┌─────────────────┐
-                                                           │  │ Caddy Proxy     │
-                                                           │  │ (Auto Let's     │
-                                                           │  │  Encrypt SSL)   │
-                                                           │  └────────┬────────┘
-                                                           │           │ reverse proxy
-                                                           ▼           ▼
-                                                    ┌──────────────────────────┐
-                                                    │  Node.js Unified Backend │
-                                                    │     (PM2 Daemon :3001)   │
-                                                    │ Auth, Chat & Socket.IO   │
-                                                    └────────────┬─────────────┘
-                                                                 │
-                                                            gRPC │ (Port 50051)
-                                                                 ▼
-                                                    ┌──────────────────────────┐
-                                                    │  C++ Encryption Engine   │
-                                                    │ AES-256-GCM + LZ4 (Docker│
-                                                    └──────────────────────────┘
+                                          INTERNET
+                                             │
+                 ┌───────────────────────────┴───────────────────────────┐
+                 ▼                                                       ▼
+        ┌─────────────────┐                                    ┌───────────────────┐
+        │  Vercel Edge    │                                    │   AWS EC2 Cloud   │
+        │   (Frontend)    │                                    │ (Stockholm Region)│
+        │instalk.         │                                    └─────────┬─────────┘
+        │shouvik.tech     │                                              │
+        └────────┬────────┘                                              │ Port 80 / 443
+                 │ HTTPS / WSS                                           │
+                 └───────────────────────────────────────────┐           ▼
+                                                             │  ┌─────────────────┐
+                                                             │  │ Caddy Proxy     │
+                                                             │  │ (Automated SSL) │
+                                                             │  └────────┬────────┘
+                                                             │           │ reverse proxy
+                                                             ▼           ▼
+                                                      ┌──────────────────────────┐
+                                                      │  Node.js Unified Backend │
+                                                      │     (PM2 Daemon :3001)   │
+                                                      │ Auth, Chat & Socket.IO   │
+                                                      └────────────┬─────────────┘
+                                                                   │
+                                                              gRPC │ (Port 50051)
+                                                                   ▼
+                                                      ┌──────────────────────────┐
+                                                      │  C++ Encryption Engine   │
+                                                      │ AES-256-GCM + LZ4 (Docker│
+                                                      └──────────────────────────┘
 
 Databases (Dockerized on AWS EC2):
-├── 🐘 PostgreSQL 16 (Port 5432) — Users, Workspaces, Channels, Memberships (Prisma ORM)
-├── 🍃 MongoDB 7    (Port 27017) — Encrypted Messages, Reactions, Presence (Mongoose)
-└── ⚡ Redis 7      (Port 6379)  — Session Cache, Pub/Sub & Presence Tracking
+├── PostgreSQL 16 (Port 5432) — Users, Workspaces, Channels, Memberships (Prisma ORM)
+├── MongoDB 7    (Port 27017) — Encrypted Messages, Reactions, Presence (Mongoose)
+└── Redis 7      (Port 6379)  — Session Cache, Pub/Sub & Presence Tracking
 ```
 
 ### Infrastructure Summary
@@ -77,23 +74,23 @@ Databases (Dockerized on AWS EC2):
 
 ---
 
-## 🧰 Tech Stack Evolution
+## Tech Stack Evolution
 
 From its initial prototype to the current cloud production deployment, the platform underwent key architectural modernizations:
 
 1. **Unified Backend Architecture**:
    - Consolidated scattered microservices into a clean, unified Node.js/Express backend (`chat-backend`), drastically reducing operational overhead and memory consumption while eliminating inter-service network hops.
 2. **Pure Modern JavaScript**:
-   - Converted 100% of codebase to clean, idiomatic JavaScript (`.js` / `.jsx`), removing brittle build pipelines while enforcing strict runtime data contracts using **Zod** schemas.
+   - Converted 100% of codebase to clean, idiomatic JavaScript (`.js` / `.jsx`), removing build pipelines while enforcing strict runtime data contracts using **Zod** schemas.
 3. **Cloud-Native Deployment**:
    - Deployed databases and C++ encryption microservice via **Docker Compose** on AWS EC2 (`t3.small`).
    - Configured **2 GB Linux Swap** memory for maximum resilience and zero OOM kills.
-   - Deployed **Caddy** for automatic HTTPS & WSS with valid Let's Encrypt certificates (`https://16-192-218-162.sslip.io`), eliminating browser Mixed Content blocking.
+   - Deployed **Caddy** for automatic HTTPS & WSS with valid Let's Encrypt certificates, eliminating browser Mixed Content blocking.
    - Hosted frontend on **Vercel** with custom domain routing at `https://instalk.shouvik.tech`.
 
 ---
 
-## 🚀 How to Run Locally
+## How to Run Locally
 
 If you want to run or develop on your local machine:
 
@@ -138,7 +135,7 @@ node prisma/seed.js
 # 4. Start backend
 npm run dev
 ```
-Backend will start on `http://localhost:3001`!
+Backend will start on `http://localhost:3001`.
 
 ---
 
@@ -153,11 +150,11 @@ npm install
 # 2. Start Vite development server
 npm run dev
 ```
-Open **`http://localhost:5173`** in your browser! 🎉
+Open `http://localhost:5173` in your browser.
 
 ---
 
-## 👥 Demo Credentials (Pre-seeded)
+## Demo Credentials (Pre-seeded)
 
 Use any of these demo accounts to test instant multi-user chat:
 
@@ -171,7 +168,7 @@ Use any of these demo accounts to test instant multi-user chat:
 
 ---
 
-## 🔄 Deployment & Updates Workflow
+## Deployment & Updates Workflow
 
 ### Updating the Frontend:
 When you make changes to the frontend (`frontend/`):
@@ -180,26 +177,26 @@ git add .
 git commit -m "Your frontend feature update"
 git push origin main
 ```
-Vercel automatically detects the commit, builds the bundle, and deploys it live to **`instalk.shouvik.tech`** in ~20 seconds.
+Vercel automatically detects the commit, builds the bundle, and deploys it live to `instalk.shouvik.tech` in ~20 seconds.
 
 ---
 
 ### Updating the Backend:
-When you update backend code (`services/auth-service/`), run the **1-click deploy script**:
+When you update backend code (`services/auth-service/`), run the 1-click deploy script:
 ```bash
 ./deploy-backend.sh
 ```
 *(or run `make deploy`)*
 
-In **4 seconds**, this automated script:
-1. 📦 Syncs your code to the AWS EC2 instance.
-2. 🔄 Applies any new Prisma schema changes (`prisma db push`).
-3. ⚡ Restarts the backend daemon via **PM2**.
-4. 🩺 Verifies the live SSL health check endpoint.
+In 4 seconds, this automated script:
+1. Syncs your code to the AWS EC2 instance.
+2. Applies any new Prisma schema changes (`prisma db push`).
+3. Restarts the backend daemon via PM2.
+4. Verifies the live health check endpoint.
 
 ---
 
-## 🛠️ Handy Make Commands
+## Handy Make Commands
 
 | Command | Description |
 | :--- | :--- |
@@ -216,6 +213,6 @@ In **4 seconds**, this automated script:
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE).
