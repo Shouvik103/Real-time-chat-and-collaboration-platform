@@ -1,13 +1,11 @@
-/** @type {import('ts-jest').JestConfigWithTsJest} */
+/** @type {import('jest').Config} */
 module.exports = {
-  preset: 'ts-jest',
   testEnvironment: 'node',
   roots: ['<rootDir>/tests'],
-  testMatch: ['**/*.test.ts'],
-  moduleFileExtensions: ['ts', 'js', 'json'],
+  testMatch: ['**/*.test.js'],
+  moduleFileExtensions: ['js', 'json'],
   collectCoverageFrom: [
-    'src/**/*.ts',
-    '!src/types/**',
+    'src/**/*.js',
     '!src/prisma/**',
     '!src/config/**',
   ],

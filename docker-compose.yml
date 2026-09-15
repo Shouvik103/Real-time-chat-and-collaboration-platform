@@ -53,49 +53,18 @@ services:
       retries: 5
       start_period: 10s
 
-  rabbitmq:
-    image: rabbitmq:3.13-management-alpine
-    container_name: chat-rabbitmq
+  encryption-engine:
+    build:
+      context: ./services/encryption-engine
+      dockerfile: Dockerfile
+    container_name: chat-encryption-engine
     restart: unless-stopped
     ports:
-      - "5672:5672"
-      - "15672:15672"
+      - "50051:50051"
     environment:
-      RABBITMQ_DEFAULT_USER: ${RABBITMQ_DEFAULT_USER:-chat_admin}
-      RABBITMQ_DEFAULT_PASS: ${RABBITMQ_DEFAULT_PASS:-chat_password}
-      RABBITMQ_DEFAULT_VHOST: ${RABBITMQ_DEFAULT_VHOST:-/}
-    volumes:
-      - rabbitmq_data:/var/lib/rabbitmq
-    healthcheck:
-      test: ["CMD", "rabbitmq-diagnostics", "-q", "ping"]
-      interval: 15s
-      timeout: 10s
-      retries: 5
-      start_period: 30s
-
-  minio:
-    image: minio/minio:latest
-    container_name: chat-minio
-    restart: unless-stopped
-    command: server /data --console-address ":9001"
-    ports:
-      - "9000:9000"
-      - "9001:9001"
-    environment:
-      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minio_admin}
-      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minio_password}
-    volumes:
-      - minio_data:/data
-    healthcheck:
-      test: ["CMD-SHELL", "wget -q -O - http://127.0.0.1:9000/minio/health/live >/dev/null 2>&1 || exit 1"]
-      interval: 10s
-      timeout: 5s
-      retries: 5
-      start_period: 20s
+      MASTER_KEY: ${MASTER_KEY:-0123456789abcdef0123456789abcdef0123456789abcdef0123456789abcdef}
 
 volumes:
   postgres_data:
   mongo_data:
   redis_data:
-  rabbitmq_data:
-  minio_data:
