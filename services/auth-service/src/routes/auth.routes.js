@@ -49,10 +49,18 @@ router.get(
             const cleanUrl = returnUrl.replace(/\/login\/?$/, '').replace(/\/$/, '');
             state = Buffer.from(JSON.stringify({ returnUrl: cleanUrl })).toString('base64');
         }
+
+        const host = req.headers['x-forwarded-host'] || req.headers.host || '';
+        const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+        const callbackURL = (!host.includes('localhost') && host)
+            ? `${proto}://${host}/api/auth/google/callback`
+            : (process.env.GOOGLE_CALLBACK_URL || 'https://16-192-218-162.sslip.io/api/auth/google/callback');
+
         passport.authenticate('google', {
             scope: ['profile', 'email'],
             session: false,
             state,
+            callbackURL,
         })(req, res, next);
     },
 );
@@ -60,7 +68,19 @@ router.get(
 router.get(
     '/google/callback',
     validate(oauthCallbackSchema),
-    passport.authenticate('google', { session: false, failureRedirect: oauthFailureRedirect }),
+    (req, res, next) => {
+        const host = req.headers['x-forwarded-host'] || req.headers.host || '';
+        const proto = req.headers['x-forwarded-proto'] || req.protocol || 'https';
+        const callbackURL = (!host.includes('localhost') && host)
+            ? `${proto}://${host}/api/auth/google/callback`
+            : (process.env.GOOGLE_CALLBACK_URL || 'https://16-192-218-162.sslip.io/api/auth/google/callback');
+
+        passport.authenticate('google', {
+            session: false,
+            failureRedirect: oauthFailureRedirect,
+            callbackURL,
+        })(req, res, next);
+    },
     oauthCallback,
 );
 

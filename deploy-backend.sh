@@ -23,6 +23,7 @@ rsync -avz --delete \
   --exclude 'node_modules' \
   --exclude '.git' \
   --exclude 'frontend' \
+  --exclude '.env' \
   -e "ssh -i '$PROJECT_DIR/$KEY_PATH' -o StrictHostKeyChecking=no" \
   "$PROJECT_DIR/services/" \
   ubuntu@$EC2_IP:/home/ubuntu/chat-platform/services/
