@@ -1,0 +1,341 @@
+.sunset-bg-wrapper {
+  position: fixed;
+  inset: 0;
+  width: 100vw;
+  height: 100vh;
+  overflow: hidden;
+  background-color: #10172d;
+  z-index: 0;
+  pointer-events: none;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+
+.chat-background {
+  position: relative;
+  width: min(100vw, 1536px);
+  aspect-ratio: 1536 / 1024;
+  overflow: hidden;
+}
+
+.background-image {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
+  display: block;
+}
+
+/* ================= SUN ================= */
+
+.sun-glow {
+  position: absolute;
+  left: 63.8%;
+  top: 56.5%;
+  width: 210px;
+  height: 210px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 238, 190, 0.5) 0%,
+    rgba(255, 220, 160, 0.34) 18%,
+    rgba(255, 198, 130, 0.22) 38%,
+    rgba(255, 180, 115, 0.11) 58%,
+    rgba(255, 165, 105, 0.045) 72%,
+    transparent 86%
+  );
+
+  filter: blur(10px);
+  animation: sunGlow 5.5s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.sun-glow::before {
+  content: "";
+  position: absolute;
+  inset: -65px;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 210, 145, 0.13) 0%,
+    rgba(255, 190, 125, 0.075) 34%,
+    rgba(255, 170, 110, 0.035) 55%,
+    transparent 74%
+  );
+
+  filter: blur(20px);
+}
+
+.sun-glow::after {
+  content: "";
+  position: absolute;
+  inset: 42px;
+  border-radius: 50%;
+
+  background: radial-gradient(
+    circle,
+    rgba(255, 245, 215, 0.32) 0%,
+    rgba(255, 220, 165, 0.16) 42%,
+    transparent 76%
+  );
+
+  filter: blur(5px);
+}
+
+@keyframes sunGlow {
+  0%,
+  100% {
+    opacity: 0.78;
+    transform: translate(-50%, -50%) scale(0.97);
+  }
+  50% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.06);
+  }
+}
+
+/* ================= WATER REFLECTION ================= */
+
+.water-reflection {
+  position: absolute;
+  left: 63.8%;
+  top: 67.5%;
+  width: 16%;
+  height: 15%;
+  transform: translateX(-50%);
+  pointer-events: none;
+  overflow: hidden;
+  opacity: 0.38;
+  filter: blur(1px);
+  animation: reflectionBreath 5.5s ease-in-out infinite;
+}
+
+.water-reflection span {
+  position: absolute;
+  left: 50%;
+  height: 2px;
+  border-radius: 50%;
+  transform: translateX(-50%);
+  background: rgba(255, 196, 130, 0.42);
+}
+
+.water-reflection span:nth-child(1) {
+  top: 8%;
+  width: 30%;
+}
+.water-reflection span:nth-child(2) {
+  top: 18%;
+  width: 52%;
+}
+.water-reflection span:nth-child(3) {
+  top: 29%;
+  width: 38%;
+}
+.water-reflection span:nth-child(4) {
+  top: 40%;
+  width: 66%;
+}
+.water-reflection span:nth-child(5) {
+  top: 52%;
+  width: 45%;
+}
+.water-reflection span:nth-child(6) {
+  top: 65%;
+  width: 72%;
+}
+.water-reflection span:nth-child(7) {
+  top: 78%;
+  width: 51%;
+}
+.water-reflection span:nth-child(8) {
+  top: 90%;
+  width: 34%;
+}
+
+.water-reflection span:nth-child(odd) {
+  animation: ripple1 4s ease-in-out infinite;
+}
+.water-reflection span:nth-child(even) {
+  animation: ripple2 4.8s ease-in-out infinite;
+}
+
+@keyframes reflectionBreath {
+  0%,
+  100% {
+    opacity: 0.27;
+    transform: translateX(-50%) scaleX(0.96);
+  }
+  50% {
+    opacity: 0.48;
+    transform: translateX(-50%) scaleX(1.04);
+  }
+}
+
+@keyframes ripple1 {
+  0%,
+  100% {
+    transform: translateX(-50%) scaleX(0.88);
+    opacity: 0.45;
+  }
+  50% {
+    transform: translateX(-50%) scaleX(1.08);
+    opacity: 0.82;
+  }
+}
+
+@keyframes ripple2 {
+  0%,
+  100% {
+    transform: translateX(-50%) scaleX(1.06);
+    opacity: 0.55;
+  }
+  50% {
+    transform: translateX(-50%) scaleX(0.9);
+    opacity: 0.35;
+  }
+}
+
+/* ================= BULBS ================= */
+
+.bulb {
+  position: absolute;
+  width: 48px;
+  height: 48px;
+  transform: translate(-50%, -50%);
+  border-radius: 50%;
+  background: rgba(255, 205, 145, 0.3);
+  filter: blur(11px);
+  animation: bulbGlow 2.8s ease-in-out infinite;
+  pointer-events: none;
+}
+
+.bulb-1 {
+  left: 1.7%;
+  top: 6%;
+}
+.bulb-2 {
+  left: 8.5%;
+  top: 12.1%;
+  animation-delay: 0.35s;
+}
+.bulb-3 {
+  left: 13.1%;
+  top: 16.1%;
+  animation-delay: 0.7s;
+}
+.bulb-4 {
+  left: 18.7%;
+  top: 13.3%;
+  animation-delay: 0.2s;
+}
+.bulb-5 {
+  left: 23.8%;
+  top: 12.1%;
+  animation-delay: 0.9s;
+}
+
+@keyframes bulbGlow {
+  0%,
+  100% {
+    opacity: 0.52;
+    transform: translate(-50%, -50%) scale(0.9);
+  }
+  35% {
+    opacity: 0.82;
+    transform: translate(-50%, -50%) scale(1.03);
+  }
+  52% {
+    opacity: 0.62;
+  }
+  70% {
+    opacity: 1;
+    transform: translate(-50%, -50%) scale(1.1);
+  }
+}
+
+/* ================= SHOOTING STAR ================= */
+
+.shooting-star {
+  position: absolute;
+  left: 42%;
+  top: 13%;
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: #fff;
+  box-shadow: 0 0 5px #fff, 0 0 12px rgba(255, 255, 255, 0.9);
+  opacity: 0;
+  will-change: transform, opacity;
+  transform: translate3d(0, 0, 0);
+  animation: starTravel 12s linear infinite;
+  pointer-events: none;
+}
+
+.shooting-star::after {
+  content: "";
+  position: absolute;
+  right: 2px;
+  top: 2px;
+  width: 85px;
+  height: 2.5px;
+  border-radius: 50%;
+  transform: rotate(28deg);
+  transform-origin: right center;
+  background: linear-gradient(
+    90deg,
+    transparent 0%,
+    rgba(255, 255, 255, 0.1) 20%,
+    rgba(56, 189, 248, 0.35) 60%,
+    rgba(255, 255, 255, 0.9) 100%
+  );
+  filter: blur(0.5px);
+}
+
+@keyframes starTravel {
+  0% {
+    transform: translate3d(0, 0, 0) scale(0.55);
+    opacity: 0;
+  }
+  6% {
+    transform: translate3d(0, 0, 0) scale(0.75);
+    opacity: 0;
+  }
+  10% {
+    opacity: 0.95;
+  }
+  20% {
+    transform: translate3d(120px, 64px, 0) scale(1);
+    opacity: 1;
+  }
+  27% {
+    transform: translate3d(195px, 104px, 0) scale(0.95);
+    opacity: 0.95;
+  }
+  29.5% {
+    transform: translate3d(223px, 119px, 0) scale(0.85);
+    opacity: 1;
+  }
+  30.2% {
+    transform: translate3d(224px, 120px, 0) scale(0.1);
+    opacity: 0;
+  }
+  100% {
+    transform: translate3d(224px, 120px, 0) scale(0.1);
+    opacity: 0;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .sun-glow,
+  .water-reflection,
+  .water-reflection span,
+  .bulb,
+  .shooting-star {
+    animation: none;
+  }
+}
