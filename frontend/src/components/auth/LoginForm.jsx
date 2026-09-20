@@ -15,6 +15,8 @@ export function LoginForm() {
   return (
     <form onSubmit={handleSubmit} className="space-y-4">
       <Input
+        id="login-email"
+        name="email"
         label="Email"
         type="email"
         placeholder="you@example.com"
@@ -26,6 +28,8 @@ export function LoginForm() {
       />
 
       <Input
+        id="login-password"
+        name="password"
         label="Password"
         type="password"
         placeholder="••••••••"

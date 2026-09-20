@@ -35,6 +35,18 @@ jest.mock('@prisma/client', () => ({
 
 jest.mock('../../src/config/passport', () => require('passport'));
 
+// ── Mock OTP Service ────────────────────────────────────────────────────────
+
+const mockOtpService = {
+  generateAndSendOtp: jest.fn().mockResolvedValue({ success: true, cooldownSeconds: 60 }),
+  verifyOtp: jest.fn().mockImplementation(async (email, otp) => {
+    if (otp === '123456') return { valid: true };
+    return { valid: false, error: 'Invalid or expired verification code' };
+  }),
+};
+
+jest.mock('../../src/services/otp.service', () => mockOtpService);
+
 // ── Env vars ────────────────────────────────────────────────────────────────
 
 process.env.JWT_SECRET = 'test-access-secret-key-for-testing-purposes';
@@ -67,6 +79,43 @@ describe('Auth Routes', () => {
     jest.clearAllMocks();
   });
 
+  // ── POST /api/auth/send-otp ───────────────────────────────────────────
+
+  describe('POST /api/auth/send-otp', () => {
+    it('should send an OTP to a valid unused email', async () => {
+      mockPrismaUser.findUnique.mockResolvedValue(null);
+
+      const res = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ email: 'new@example.com' });
+
+      expect(res.status).toBe(200);
+      expect(res.body.success).toBe(true);
+      expect(res.body.data.message).toMatch(/verification code sent/i);
+    });
+
+    it('should return 409 if email is already registered', async () => {
+      mockPrismaUser.findUnique.mockResolvedValue(testUser);
+
+      const res = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ email: testUser.email });
+
+      expect(res.status).toBe(409);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('EMAIL_TAKEN');
+    });
+
+    it('should return 400 for invalid email', async () => {
+      const res = await request(app)
+        .post('/api/auth/send-otp')
+        .send({ email: 'invalid-email' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+    });
+  });
+
   // ── POST /api/auth/register ───────────────────────────────────────────
 
   describe('POST /api/auth/register', () => {
@@ -74,9 +123,10 @@ describe('Auth Routes', () => {
       email: 'new@example.com',
       password: 'Str0ng@Pass',
       displayName: 'New User',
+      otp: '123456',
     };
 
-    it('should register a new user and return tokens', async () => {
+    it('should register a new user and return tokens when OTP is valid', async () => {
       mockPrismaUser.findUnique.mockResolvedValue(null);
       mockPrismaUser.create.mockResolvedValue({
         ...testUser,
@@ -96,6 +146,18 @@ describe('Auth Routes', () => {
       expect(res.body.data.user.email).toBe(validBody.email);
     });
 
+    it('should return 400 if OTP is invalid or expired', async () => {
+      mockPrismaUser.findUnique.mockResolvedValue(null);
+
+      const res = await request(app)
+        .post('/api/auth/register')
+        .send({ ...validBody, otp: '000000' });
+
+      expect(res.status).toBe(400);
+      expect(res.body.success).toBe(false);
+      expect(res.body.error.code).toBe('INVALID_OTP');
+    });
+
     it('should return 409 when email already exists', async () => {
       mockPrismaUser.findUnique.mockResolvedValue(testUser);
 
@@ -111,7 +173,7 @@ describe('Auth Routes', () => {
     it('should return 400 for invalid input', async () => {
       const res = await request(app)
         .post('/api/auth/register')
-        .send({ email: 'bad', password: 'short', displayName: '' });
+        .send({ email: 'bad', password: 'short', displayName: '', otp: '123' });
 
       expect(res.status).toBe(400);
       expect(res.body.success).toBe(false);

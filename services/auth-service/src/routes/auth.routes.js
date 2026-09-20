@@ -8,6 +8,7 @@ const { validate } = require('../middleware/validate');
 const { authenticate } = require('../middleware/authenticate');
 const { authLimiter } = require('../middleware/rateLimiter');
 const {
+    sendOtpSchema,
     registerSchema,
     loginSchema,
     refreshSchema,
@@ -17,6 +18,7 @@ const {
     oauthCallbackSchema,
 } = require('../validators/auth.validator');
 const {
+    sendOtp,
     register,
     login,
     logout,
@@ -30,6 +32,7 @@ const oauthFailureRedirect = `${process.env.FRONTEND_URL || 'http://localhost:51
 
 // ── Local auth ──────────────────────────────────────────────────────────────
 
+router.post('/send-otp', authLimiter, validate(sendOtpSchema), sendOtp);
 router.post('/register', authLimiter, validate(registerSchema), register);
 router.post('/login', authLimiter, validate(loginSchema), login);
 router.post('/logout', validate(logoutSchema), authenticate, logout);

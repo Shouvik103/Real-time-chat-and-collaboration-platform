@@ -4,6 +4,16 @@
 
 const { z } = require('zod');
 
+const sendOtpSchema = z.object({
+    body: z.object({
+        email: z
+            .string({ required_error: 'Email is required' })
+            .email('Invalid email address')
+            .max(255, 'Email must be at most 255 characters')
+            .transform((v) => v.toLowerCase().trim()),
+    }),
+});
+
 const registerSchema = z.object({
     body: z.object({
         email: z
@@ -16,14 +26,18 @@ const registerSchema = z.object({
             .min(8, 'Password must be at least 8 characters')
             .max(128, 'Password must be at most 128 characters')
             .regex(
-                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[@$!%*?&#])/,
-                'Password must contain uppercase, lowercase, number, and special character',
+                /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[\W_])/,
+                'Password must contain uppercase, lowercase, number, and a special character or symbol (e.g. hyphens, @, #, etc.)',
             ),
         displayName: z
             .string({ required_error: 'Display name is required' })
             .min(2, 'Display name must be at least 2 characters')
             .max(100, 'Display name must be at most 100 characters')
             .trim(),
+        otp: z
+            .string({ required_error: 'Verification code is required' })
+            .length(6, 'Verification code must be 6 digits')
+            .regex(/^\d{6}$/, 'Verification code must be 6 numeric digits'),
     }),
 });
 
@@ -76,6 +90,7 @@ const oauthCallbackSchema = z.object({
 });
 
 module.exports = {
+    sendOtpSchema,
     registerSchema,
     loginSchema,
     refreshSchema,

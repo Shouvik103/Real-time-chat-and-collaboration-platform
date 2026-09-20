@@ -1,5 +1,6 @@
 import api from "./axios";
 export const authApi = {
+  sendOtp: (body) => api.post("/api/auth/send-otp", body),
   login: (body) => api.post("/api/auth/login", body),
   register: (body) => api.post("/api/auth/register", body),
   logout: () => api.post("/api/auth/logout"),

@@ -13,6 +13,7 @@ const {
     revokeAllRefreshTokens,
 } = require('../services/jwt.service');
 const { hashPassword, comparePassword } = require('../services/password.service');
+const { generateAndSendOtp, verifyOtp } = require('../services/otp.service');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { AppError } = require('../utils/appError');
 const { logger } = require('../utils/logger');
@@ -44,18 +45,57 @@ const sanitiseUser = (user) => ({
     updatedAt: user.updatedAt,
 });
 
-// POST /register
-const register = async (req, res, next) => {
+// POST /send-otp
+const sendOtp = async (req, res, next) => {
     try {
-        const { email, password, displayName } = req.body;
-        const existing = await prisma.user.findUnique({ where: { email } });
+        const { email } = req.body;
+        const cleanEmail = email.toLowerCase().trim();
+
+        // Check if user already exists
+        const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
         if (existing) {
             sendError(res, 'EMAIL_TAKEN', 'An account with this email already exists', 409);
             return;
         }
+
+        const otpResult = await generateAndSendOtp(cleanEmail);
+        if (!otpResult.success) {
+            sendError(res, 'OTP_ERROR', otpResult.error, 400);
+            return;
+        }
+
+        sendSuccess(res, {
+            message: 'Verification code sent successfully to your email',
+            cooldownSeconds: otpResult.cooldownSeconds,
+        }, 200);
+    } catch (err) {
+        next(err);
+    }
+};
+
+// POST /register
+const register = async (req, res, next) => {
+    try {
+        const { email, password, displayName, otp } = req.body;
+        const cleanEmail = email.toLowerCase().trim();
+
+        // Check if user already exists
+        const existing = await prisma.user.findUnique({ where: { email: cleanEmail } });
+        if (existing) {
+            sendError(res, 'EMAIL_TAKEN', 'An account with this email already exists', 409);
+            return;
+        }
+
+        // Verify OTP code from Redis
+        const otpCheck = await verifyOtp(cleanEmail, otp);
+        if (!otpCheck.valid) {
+            sendError(res, 'INVALID_OTP', otpCheck.error, 400);
+            return;
+        }
+
         const hashedPassword = await hashPassword(password);
         const user = await prisma.user.create({
-            data: { email, password: hashedPassword, displayName },
+            data: { email: cleanEmail, password: hashedPassword, displayName: displayName.trim() },
         });
         const accessToken = signAccessToken({ userId: user.id, email: user.email, displayName: user.displayName });
         const refreshToken = await signRefreshToken({ userId: user.id, email: user.email, displayName: user.displayName });
@@ -198,4 +238,4 @@ const oauthCallback = async (req, res, next) => {
     }
 };
 
-module.exports = { register, login, logout, refresh, me, oauthCallback };
+module.exports = { sendOtp, register, login, logout, refresh, me, oauthCallback };
