@@ -42,7 +42,7 @@ export function LoginForm() {
 
       <Button
         type="submit"
-        className="w-full h-11 rounded-xl bg-[#008B8B] text-white hover:bg-[#007373] transition-all duration-300 font-medium text-sm"
+        className="w-full h-11 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white transition-all duration-300 font-medium text-sm shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
         loading={isLoggingIn}
       >
         Sign in

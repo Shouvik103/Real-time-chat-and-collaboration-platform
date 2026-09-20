@@ -1,4 +1,4 @@
-import { useRef } from "react";
+import { useEffect, useRef } from "react";
 import { Navigate } from "react-router-dom";
 import { LoginForm } from "@/components/auth/LoginForm";
 import { SunsetBackground } from "@/components/ui/SunsetBackground";
@@ -8,28 +8,36 @@ import { useAuthStore } from "@/store/authStore";
 export default function LoginPage() {
   const cardRef = useRef(null);
   const isAuthenticated = useAuthStore((s) => s.isAuthenticated);
+
+  // Strictly prevent any scrolling on the login page
+  useEffect(() => {
+    const origOverflow = document.body.style.overflow;
+    document.body.style.overflow = "hidden";
+    return () => {
+      document.body.style.overflow = origOverflow;
+    };
+  }, []);
+
   if (isAuthenticated) return <Navigate to="/" replace />;
 
   return (
-    <div className="relative min-h-screen w-full overflow-hidden bg-[#10172d] flex items-center justify-center">
-      <SunsetBackground />
-
-      {/* Coordinate frame matching 1536x1024 sunset background */}
-      <div className="relative z-10 w-full max-w-[1536px] aspect-auto md:aspect-[1536/1024] flex items-center justify-center pointer-events-none p-4 md:p-0">
-        <div className="pointer-events-auto w-full max-w-[420px] md:absolute md:left-[59%] md:top-[45%] md:-translate-x-1/2 md:-translate-y-1/2">
+    <div className="fixed inset-0 h-screen w-screen overflow-hidden bg-[#10172d] select-none">
+      <SunsetBackground>
+        {/* Coordinate frame matching the 1536x1024 sunset artwork */}
+        <div className="pointer-events-auto absolute left-1/2 md:left-[58.9%] top-[18%] md:top-[18%] -translate-x-1/2 z-20 w-[90%] md:w-[27.2%] min-w-[320px] max-w-[420px]">
           <section
             ref={cardRef}
             id="login-card"
-            className="relative w-full rounded-[30px] border border-white/10 border-t-white/20 bg-[#0b101b]/85 p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl transition-all duration-300 hover:border-white/20"
+            className="relative w-full rounded-[28px] border border-white/10 border-t-white/20 bg-[#10172d]/85 p-6 sm:p-8 shadow-[0_25px_60px_-15px_rgba(0,0,0,0.85),inset_0_1px_0_rgba(255,255,255,0.12)] backdrop-blur-2xl transition-all duration-300 hover:border-white/20"
           >
             {/* Synchronized orbiting star around the card perimeter */}
             <CardStarBorderOrbit cardRef={cardRef} />
             <div className="flex flex-col items-center justify-center text-center">
               <div className="flex items-center justify-center gap-3">
-                <div className="flex h-12 w-12 items-center justify-center">
+                <div className="flex h-11 w-11 items-center justify-center">
                   <svg
                     viewBox="0 0 120 120"
-                    className="h-11 w-11"
+                    className="h-10 w-10"
                     aria-label="InsTalk logo"
                   >
                     <defs>
@@ -67,20 +75,20 @@ export default function LoginPage() {
                     </g>
                   </svg>
                 </div>
-                <h1 className="font-display text-3xl font-bold tracking-tight text-white">
+                <h1 className="font-display text-2xl sm:text-3xl font-bold tracking-tight text-white">
                   InsTalk
                 </h1>
               </div>
-              <p className="mt-2 text-sm text-slate-300">
+              <p className="mt-1.5 text-xs sm:text-sm text-slate-300">
                 Sign in to continue to your workspace.
               </p>
             </div>
-            <div className="mt-6">
+            <div className="mt-5 sm:mt-6">
               <LoginForm />
             </div>
           </section>
         </div>
-      </div>
+      </SunsetBackground>
     </div>
   );
 }

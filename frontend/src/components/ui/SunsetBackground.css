@@ -6,7 +6,6 @@
   overflow: hidden;
   background-color: #10172d;
   z-index: 0;
-  pointer-events: none;
   display: flex;
   align-items: center;
   justify-content: center;
@@ -14,9 +13,20 @@
 
 .chat-background {
   position: relative;
-  width: min(100vw, 1536px);
+  width: min(100vw, calc(100vh * (1536 / 1024)));
+  height: min(100vh, calc(100vw * (1024 / 1536)));
   aspect-ratio: 1536 / 1024;
+  max-width: 1536px;
+  max-height: 1024px;
   overflow: hidden;
+}
+
+@media (max-width: 767px) {
+  .chat-background {
+    width: 100vw;
+    height: 100vh;
+    aspect-ratio: unset;
+  }
 }
 
 .background-image {

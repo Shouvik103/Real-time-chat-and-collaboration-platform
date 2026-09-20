@@ -46,7 +46,7 @@ export function RegisterForm() {
     const hasSpecial = /[\W_]/.test(pass);
 
     if (!hasLower || !hasUpper || !hasNumber || !hasSpecial) {
-      return "Must contain uppercase, lowercase, number, and a special character or symbol (e.g. ! @ # $ - _)";
+      return "Password requires uppercase, lowercase, number & a symbol";
     }
     return "";
   };
@@ -197,7 +197,7 @@ export function RegisterForm() {
             onChange={(e) => handlePasswordChange(e.target.value)}
             onInput={(e) => handlePasswordChange(e.target.value)}
             required
-            error={passwordError}
+            isInvalid={Boolean(passwordError)}
             leftAddon={<LockClosedIcon className="h-4 w-4" />}
           />
 
@@ -212,13 +212,13 @@ export function RegisterForm() {
             onChange={(e) => handleConfirmChange(e.target.value)}
             onInput={(e) => handleConfirmChange(e.target.value)}
             required
-            error={confirmError}
+            isInvalid={Boolean(confirmError)}
             leftAddon={<LockClosedIcon className="h-4 w-4" />}
           />
 
           <Button
             type="submit"
-            className="w-full h-11 rounded-xl bg-[#008B8B] text-white hover:bg-[#007373] transition-all duration-300 font-medium text-sm"
+            className="w-full h-11 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white transition-all duration-300 font-medium text-sm shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
             loading={isSendingOtp}
           >
             Continue to Verification
@@ -269,72 +269,74 @@ export function RegisterForm() {
         </form>
       ) : (
         // ── STEP 2: OTP Verification ────────────────────────────────────────
-        <form onSubmit={handleVerifyAndRegister} className="space-y-4">
-          <div className="text-center pb-1">
-            <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-[#008B8B]/20 text-[#008B8B] mb-2 border border-[#008B8B]/30">
-              <KeyIcon className="h-6 w-6" />
+        <form onSubmit={handleVerifyAndRegister} className="space-y-4 min-h-[380px] flex flex-col justify-between">
+          <div className="space-y-4">
+            <div className="text-center pb-1">
+              <div className="inline-flex items-center justify-center h-12 w-12 rounded-full bg-indigo-500/20 text-indigo-400 mb-2 border border-indigo-500/30">
+                <KeyIcon className="h-6 w-6" />
+              </div>
+              <h3 className="text-base font-semibold text-white">Verify Your Email</h3>
+              <p className="text-xs text-slate-400 mt-1">
+                We sent a 6-digit code to <span className="text-emerald-300 font-medium">{email}</span>
+              </p>
             </div>
-            <h3 className="text-base font-semibold text-white">Verify Your Email</h3>
-            <p className="text-xs text-slate-400 mt-1">
-              We sent a 6-digit code to <span className="text-emerald-300 font-medium">{email}</span>
-            </p>
-          </div>
 
-          <div className="space-y-1">
-            <label className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400 block text-center">
-              Enter 6-Digit Code
-            </label>
-            <input
-              id="register-otp"
-              name="otp"
-              type="text"
-              inputMode="numeric"
-              pattern="[0-9]*"
-              maxLength={6}
-              placeholder="••••••"
-              autoComplete="one-time-code"
-              autoFocus
-              value={otp}
-              onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
-              className="w-full h-13 text-center tracking-[0.6em] text-2xl font-mono font-bold rounded-xl border border-white/10 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-emerald-400/40 focus:border-emerald-300/40 transition-all"
-              required
-            />
-          </div>
+            <div className="space-y-1.5">
+              <label className="text-[11px] font-semibold uppercase tracking-[0.28em] text-slate-400 block text-center">
+                Enter 6-Digit Code
+              </label>
+              <input
+                id="register-otp"
+                name="otp"
+                type="text"
+                inputMode="numeric"
+                pattern="[0-9]*"
+                maxLength={6}
+                placeholder="••••••"
+                autoComplete="one-time-code"
+                autoFocus
+                value={otp}
+                onChange={(e) => setOtp(e.target.value.replace(/\D/g, "").slice(0, 6))}
+                className="w-full h-12 text-center tracking-[0.6em] text-2xl font-mono font-bold rounded-xl border border-white/10 bg-white/5 text-white focus:outline-none focus:ring-2 focus:ring-indigo-400/40 focus:border-indigo-400/40 transition-all"
+                required
+              />
+            </div>
 
-          <Button
-            type="submit"
-            className="w-full h-11 rounded-xl bg-[#008B8B] text-white hover:bg-[#007373] transition-all duration-300 font-medium text-sm"
-            loading={isRegistering}
-            disabled={otp.length !== 6}
-          >
-            Verify & Create Account
-          </Button>
-
-          <div className="flex items-center justify-between text-xs pt-1 px-1">
-            <button
-              type="button"
-              onClick={() => setStep(1)}
-              className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors"
+            <Button
+              type="submit"
+              className="w-full h-11 rounded-xl bg-indigo-500 hover:bg-indigo-600 text-white transition-all duration-300 font-medium text-sm shadow-[0_4px_14px_rgba(99,102,241,0.35)]"
+              loading={isRegistering}
+              disabled={otp.length !== 6}
             >
-              <ArrowLeftIcon className="h-3.5 w-3.5" />
-              Change email
-            </button>
+              Verify & Create Account
+            </Button>
 
-            <button
-              type="button"
-              onClick={handleResendOtp}
-              disabled={countdown > 0 || isSendingOtp}
-              className={`font-medium transition-colors ${
-                countdown > 0
-                  ? "text-slate-500 cursor-not-allowed"
-                  : "text-emerald-300 hover:underline cursor-pointer"
-              }`}
-            >
-              {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
-            </button>
+            <div className="flex items-center justify-between text-xs pt-1 px-1">
+              <button
+                type="button"
+                onClick={() => setStep(1)}
+                className="inline-flex items-center gap-1 text-slate-400 hover:text-slate-200 transition-colors"
+              >
+                <ArrowLeftIcon className="h-3.5 w-3.5" />
+                Change email
+              </button>
+
+              <button
+                type="button"
+                onClick={handleResendOtp}
+                disabled={countdown > 0 || isSendingOtp}
+                className={`font-medium transition-colors ${
+                  countdown > 0
+                    ? "text-slate-500 cursor-not-allowed"
+                    : "text-emerald-300 hover:underline cursor-pointer"
+                }`}
+              >
+                {countdown > 0 ? `Resend in ${countdown}s` : "Resend code"}
+              </button>
+            </div>
           </div>
 
-          <p className="text-center text-xs text-slate-500 pt-2 border-t border-white/5">
+          <p className="text-center text-xs text-slate-500 pt-3 border-t border-white/5">
             Check your spam folder if you don't see the email in your inbox.
           </p>
         </form>
