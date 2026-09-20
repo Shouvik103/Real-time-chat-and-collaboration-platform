@@ -16,6 +16,7 @@ export function RegisterForm() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirm, setConfirm] = useState("");
+  const [passwordError, setPasswordError] = useState("");
   const [confirmError, setConfirmError] = useState("");
   const [isSendingOtp, setIsSendingOtp] = useState(false);
 
@@ -32,16 +33,43 @@ export function RegisterForm() {
     return () => clearInterval(timer);
   }, [countdown]);
 
+  const validatePassword = (pass) => {
+    if (!pass || pass.length < 8) {
+      return "Password must be at least 8 characters";
+    }
+    if (pass.length > 128) {
+      return "Password must be at most 128 characters";
+    }
+    const hasLower = /[a-z]/.test(pass);
+    const hasUpper = /[A-Z]/.test(pass);
+    const hasNumber = /\d/.test(pass);
+    const hasSpecial = /[\W_]/.test(pass);
+
+    if (!hasLower || !hasUpper || !hasNumber || !hasSpecial) {
+      return "Must contain uppercase, lowercase, number, and a special character or symbol (e.g. ! @ # $ - _)";
+    }
+    return "";
+  };
+
   const handlePasswordChange = (val) => {
     setPassword(val);
-    if (confirm && val === confirm) {
-      setConfirmError("");
+    if (passwordError) {
+      setPasswordError(validatePassword(val));
+    }
+    if (confirm) {
+      if (val === confirm) {
+        setConfirmError("");
+      } else {
+        setConfirmError("Passwords do not match");
+      }
     }
   };
 
   const handleConfirmChange = (val) => {
     setConfirm(val);
-    if (password && val === password) {
+    if (password && val !== password) {
+      setConfirmError("Passwords do not match");
+    } else {
       setConfirmError("");
     }
   };
@@ -50,16 +78,37 @@ export function RegisterForm() {
   const handleProceedToOtp = async (e) => {
     e.preventDefault();
 
-    if (password !== confirm) {
-      setConfirmError("Passwords do not match");
+    // 1. Validate Display Name
+    if (!displayName || displayName.trim().length < 2) {
+      toast.error("Display name must be at least 2 characters");
       return;
     }
-    if (password.length < 8) {
-      setConfirmError("Password must be at least 8 characters");
+
+    // 2. Validate Email format
+    const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+    if (!email || !emailRegex.test(email.trim())) {
+      toast.error("Please enter a valid email address");
+      return;
+    }
+
+    // 3. Validate Password complexity before sending OTP email
+    const passErr = validatePassword(password);
+    if (passErr) {
+      setPasswordError(passErr);
+      toast.error(passErr);
+      return;
+    }
+    setPasswordError("");
+
+    // 4. Validate Confirm Password match
+    if (password !== confirm) {
+      setConfirmError("Passwords do not match");
+      toast.error("Passwords do not match");
       return;
     }
     setConfirmError("");
 
+    // ONLY send OTP if password and all fields are verified valid
     setIsSendingOtp(true);
     try {
       const res = await authApi.sendOtp({ email: email.trim() });
@@ -148,6 +197,7 @@ export function RegisterForm() {
             onChange={(e) => handlePasswordChange(e.target.value)}
             onInput={(e) => handlePasswordChange(e.target.value)}
             required
+            error={passwordError}
             leftAddon={<LockClosedIcon className="h-4 w-4" />}
           />
 
