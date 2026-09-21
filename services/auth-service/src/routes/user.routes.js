@@ -10,6 +10,7 @@ const {
     getProfileSchema,
     uploadAvatarSchema,
     createWorkspaceSchema,
+    updateWorkspaceSchema,
     deleteWorkspaceSchema,
     workspaceParamSchema,
     createChannelSchema,
@@ -24,6 +25,7 @@ const {
     uploadAvatar,
     getWorkspaces,
     createWorkspace,
+    updateWorkspace,
     deleteWorkspace,
     getChannels,
     createChannel,
@@ -54,6 +56,7 @@ router.patch('/profile/avatar', validate(uploadAvatarSchema), uploadAvatar);
 // Workspace routes
 router.get('/workspaces', getWorkspaces);
 router.post('/workspaces', validate(createWorkspaceSchema), createWorkspace);
+router.patch('/workspaces/:workspaceId', validate(updateWorkspaceSchema), updateWorkspace);
 router.post('/workspaces/dm', createDm);
 router.post('/workspaces/join', validate(joinByCodeSchema), joinByCode);
 router.delete('/workspaces/:workspaceId', validate(deleteWorkspaceSchema), deleteWorkspace);

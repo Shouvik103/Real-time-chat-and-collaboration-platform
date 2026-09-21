@@ -110,7 +110,7 @@ export function ChatArea() {
       strokeWidth="7"
       strokeLinecap="round"
       strokeLinejoin="round"
-    /><circle cx="46" cy="60" r="22" fill="#a7f3d0" opacity="0.9" /><circle cx="38" cy="60" r="3.6" fill="#0b101b" /><circle cx="46" cy="60" r="3.6" fill="#0b101b" /><circle cx="54" cy="60" r="3.6" fill="#0b101b" /></g></svg></div><div className="space-y-2"><h2 className="text-2xl font-light text-white">Welcome to InsTalk</h2><p className="text-sm text-slate-400 leading-relaxed">
+    /><circle cx="46" cy="60" r="22" fill="#a7f3d0" opacity="0.9" /><circle cx="38" cy="60" r="3.6" fill="#0b101b" /><circle cx="46" cy="60" r="3.6" fill="#0b101b" /><circle cx="54" cy="60" r="3.6" fill="#0b101b" /></g></svg></div><div className="space-y-2"><h2 className="text-2xl font-light text-slate-900 dark:text-white">Welcome to InsTalk</h2><p className="text-sm text-slate-500 dark:text-slate-400 leading-relaxed">
               Select a conversation from the sidebar to start chatting, or create a new group / direct message.
             </p></div></div></div>;
   }
@@ -118,11 +118,25 @@ export function ChatArea() {
   const conversationName = getConversationName();
   return <div className="flex flex-1 flex-col min-w-0 min-h-0 relative">{
     /* Conversation header */
-  }<header className="flex items-center gap-3 border-b border-chat-border px-4 py-3 bg-chat flex-shrink-0">{isDm ? <div className="shrink-0"><Avatar
-    name={conversationName}
-    src={getConversationAvatarUrl()}
-    size="sm"
-  /></div> : <div className="h-8 w-8 rounded-full bg-brand/20 flex items-center justify-center shrink-0"><UserGroupIcon className="h-4 w-4 text-brand-light" /></div>}<h2 className="text-sm font-semibold text-white">{conversationName}</h2></header>{
+  }<header className="flex items-center justify-between border-b border-chat-border px-4 py-3 bg-chat flex-shrink-0"><div className="flex items-center gap-3">{isDm ? (
+    <div className="shrink-0">
+      <Avatar
+        name={conversationName}
+        src={getConversationAvatarUrl()}
+        size="sm"
+      />
+    </div>
+  ) : activeWorkspace?.avatarUrl ? (
+    <img
+      src={activeWorkspace.avatarUrl}
+      alt={conversationName}
+      className="h-8 w-8 rounded-full object-cover shrink-0 ring-1 ring-brand/20 shadow-sm"
+    />
+  ) : (
+    <div className="h-8 w-8 rounded-full bg-brand/20 flex items-center justify-center shrink-0">
+      <UserGroupIcon className="h-4 w-4 text-brand-light" />
+    </div>
+  )}<h2 className="text-sm font-semibold text-slate-900 dark:text-white">{conversationName}</h2></div></header>{
     /* Messages Area */
   }<div className="flex-1 relative overflow-hidden chat-bubble-pattern"><div
     ref={scrollRef}

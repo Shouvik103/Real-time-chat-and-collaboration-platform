@@ -2,6 +2,26 @@ import { format, formatDistanceToNow, isToday, isYesterday, parseISO } from "dat
 export function formatMessageTime(dateStr) {
   return format(parseISO(dateStr), "h:mm a");
 }
+export function formatLastMessageTime(dateStr) {
+  if (!dateStr) return "";
+  try {
+    const date = typeof dateStr === "string" ? parseISO(dateStr) : new Date(dateStr);
+    if (isNaN(date.getTime())) return "";
+    if (isToday(date)) {
+      return format(date, "h:mm a");
+    }
+    if (isYesterday(date)) {
+      return "Yesterday";
+    }
+    const diffDays = Math.floor((Date.now() - date.getTime()) / (1000 * 60 * 60 * 24));
+    if (diffDays < 7) {
+      return format(date, "EEE");
+    }
+    return format(date, "MMM d");
+  } catch {
+    return "";
+  }
+}
 export function formatDateDivider(dateStr) {
   const date = parseISO(dateStr);
   if (isToday(date)) return "Today";

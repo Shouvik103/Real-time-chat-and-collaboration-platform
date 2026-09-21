@@ -6,9 +6,11 @@ import {
 } from "@heroicons/react/24/solid";
 import EmojiPicker, { Theme } from "emoji-picker-react";
 import { useChatStore } from "@/store/chatStore";
+import { useUiStore } from "@/store/uiStore";
 import { useSocket } from "@/hooks/useSocket";
 export function MessageInput({ editingMessage, onCancelEdit }) {
   const activeChannelId = useChatStore((s) => s.activeChannelId);
+  const theme = useUiStore((s) => s.theme);
   const { sendMessage, editMessage, startTyping, stopTyping } = useSocket();
   const [text, setText] = useState("");
   const [showEmojiPicker, setShowEmojiPicker] = useState(false);
@@ -70,15 +72,15 @@ export function MessageInput({ editingMessage, onCancelEdit }) {
     /* Emoji Picker */
   }{showEmojiPicker && <div className="absolute bottom-16 left-3 z-50"><EmojiPicker
     onEmojiClick={handleEmojiClick}
-    theme={Theme.DARK}
+    theme={theme === "dark" ? Theme.DARK : Theme.LIGHT}
     lazyLoadEmojis
     height={380}
     width={320}
-  /></div>}<div className="flex items-end gap-2 rounded-lg bg-sidebar border border-chat-border px-3 py-2 focus-within:border-brand/50 transition-colors">{
+  /></div>}<div className="flex items-end gap-2 rounded-xl bg-white dark:bg-sidebar border border-slate-200 dark:border-chat-border px-3 py-2 focus-within:border-brand transition-colors shadow-xs">{
     /* Emoji picker toggle */
   }<button
     onClick={() => setShowEmojiPicker((v) => !v)}
-    className="shrink-0 p-1 text-slate-400 hover:text-white transition-colors"
+    className="shrink-0 p-1 text-slate-400 hover:text-slate-700 dark:hover:text-white transition-colors"
     title="Emoji"
   ><FaceSmileIcon className="h-5 w-5" /></button>{
     /* Text area */
@@ -90,14 +92,14 @@ export function MessageInput({ editingMessage, onCancelEdit }) {
     onKeyDown={handleKeyDown}
     onFocus={() => setShowEmojiPicker(false)}
     placeholder="Type a message…"
-    className="flex-1 resize-none bg-transparent text-sm text-white placeholder-slate-500 outline-none max-h-32 overflow-y-auto"
+    className="flex-1 resize-none bg-transparent text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 outline-none max-h-32 overflow-y-auto"
     style={{ minHeight: "24px" }}
   />{
     /* Send */
   }<button
     onClick={handleSend}
     disabled={!text.trim()}
-    className="shrink-0 rounded-md bg-brand p-1.5 text-white transition-colors hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed"
+    className="shrink-0 rounded-lg bg-brand p-1.5 text-white transition-colors hover:bg-brand-hover disabled:opacity-40 disabled:cursor-not-allowed cursor-pointer"
     title="Send message"
   ><PaperAirplaneIcon className="h-4 w-4" /></button></div></div>;
 }

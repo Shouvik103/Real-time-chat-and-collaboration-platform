@@ -40,23 +40,23 @@ export function MessageBubble({
     )}
   >{
     /* Sender name (above bubble) */
-  }{showAvatar && !isOwn && <div className="flex items-baseline gap-2 mb-1 flex-row"><span className="text-xs font-semibold text-slate-300">{message.senderName}</span></div>}{
+  }{showAvatar && !isOwn && <div className="flex items-baseline gap-2 mb-1 flex-row"><span className="text-xs font-semibold text-indigo-600 dark:text-indigo-400">{message.senderName}</span></div>}{
     /* Message bubble */
   }<div
     className={clsx(
-      "relative rounded-2xl px-4 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap border-2",
-      isOwn ? "bg-blue-600 text-white border-blue-400 rounded-br-sm" : "bg-[#2a2d36] text-slate-200 border-slate-600 rounded-bl-sm"
+      "relative rounded-2xl px-4 py-2 text-sm leading-relaxed break-words whitespace-pre-wrap border",
+      isOwn ? "bg-indigo-600 text-white border-indigo-400 rounded-br-sm shadow-xs" : "bg-white dark:bg-[#2a2d36] text-slate-900 dark:text-slate-200 border-slate-200 dark:border-slate-600 rounded-bl-sm shadow-xs"
     )}
   ><div>{message.content}</div>{message.edited && <div className={clsx(
     "text-[10px] mt-1 italic",
-    isOwn ? "text-blue-200/80 text-right" : "text-slate-400 text-right"
+    isOwn ? "text-blue-200/80 text-right" : "text-slate-500 dark:text-slate-400 text-right"
   )}>
               (edited)
             </div>}{
     /* Hover actions inside bubble area */
   }{isOwn && <div
     className={clsx(
-      "absolute -top-7 hidden group-hover:flex items-center gap-0.5 rounded-md border border-chat-border bg-chat-surface shadow-md px-1 z-10",
+      "absolute -top-7 hidden group-hover:flex items-center gap-0.5 rounded-md border border-slate-200 dark:border-chat-border bg-white dark:bg-chat-surface shadow-md px-1 z-10",
       "right-0"
     )}
   ><button

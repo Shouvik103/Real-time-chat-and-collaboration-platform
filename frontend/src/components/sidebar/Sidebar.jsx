@@ -1,4 +1,4 @@
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback, useRef } from "react";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import toast from "react-hot-toast";
 import { clsx } from "clsx";
@@ -11,17 +11,21 @@ import {
   TrashIcon,
   ChatBubbleLeftRightIcon,
   EllipsisVerticalIcon,
-  ClipboardDocumentIcon
+  ClipboardDocumentIcon,
+  PencilSquareIcon
 } from "@heroicons/react/24/outline";
+import { formatLastMessageTime } from "@/utils/dateFormat";
 import { useChatStore } from "@/store/chatStore";
 import { useUiStore } from "@/store/uiStore";
 import { useAuthStore } from "@/store/authStore";
 import { workspaceApi } from "@/api/workspace.api";
 import { UserInfo } from "./UserInfo";
+import { EditGroupModal } from "./EditGroupModal";
 import { Modal } from "@/components/ui/Modal";
 import { Input } from "@/components/ui/Input";
 import { Button } from "@/components/ui/Button";
 import { Avatar } from "@/components/ui/Avatar";
+import { ThemeSwitch } from "@/components/ui/ThemeSwitch";
 export function Sidebar() {
   const queryClient = useQueryClient();
   const currentUser = useAuthStore((s) => s.user);
@@ -35,6 +39,11 @@ export function Sidebar() {
   } = useChatStore();
   const {
     sidebarOpen,
+    sidebarWidth,
+    setSidebarWidth,
+    resetSidebarWidth,
+    sidebarSection,
+    setSidebarSection,
     createWorkspaceModalOpen,
     setCreateWorkspaceModalOpen,
     createDmModalOpen,
@@ -44,9 +53,50 @@ export function Sidebar() {
     joinByCodeModalOpen,
     setJoinByCodeModalOpen
   } = useUiStore();
+  const [isDragging, setIsDragging] = useState(false);
+  const isDraggingRef = useRef(false);
+
+  const handleMouseDown = useCallback((e) => {
+    e.preventDefault();
+    setIsDragging(true);
+    isDraggingRef.current = true;
+  }, []);
+
+  useEffect(() => {
+    const handleMouseMove = (e) => {
+      if (!isDraggingRef.current) return;
+      setSidebarWidth(e.clientX);
+    };
+
+    const handleMouseUp = () => {
+      if (isDraggingRef.current) {
+        isDraggingRef.current = false;
+        setIsDragging(false);
+      }
+    };
+
+    window.addEventListener("mousemove", handleMouseMove);
+    window.addEventListener("mouseup", handleMouseUp);
+    return () => {
+      window.removeEventListener("mousemove", handleMouseMove);
+      window.removeEventListener("mouseup", handleMouseUp);
+    };
+  }, [setSidebarWidth]);
+
+  useEffect(() => {
+    if (isDragging) {
+      document.body.style.userSelect = "none";
+      document.body.style.cursor = "col-resize";
+    } else {
+      document.body.style.userSelect = "";
+      document.body.style.cursor = "";
+    }
+  }, [isDragging]);
   const [contextMenuWs, setContextMenuWs] = useState(null);
   const [deleteWsConfirmOpen, setDeleteWsConfirmOpen] = useState(false);
   const [deleteTargetWs, setDeleteTargetWs] = useState(null);
+  const [editGroupModalOpen, setEditGroupModalOpen] = useState(false);
+  const [editingGroup, setEditingGroup] = useState(null);
   const { data: wsData } = useQuery({
     queryKey: ["workspaces"],
     queryFn: () => workspaceApi.getWorkspaces().then((r) => r.data.data.workspaces),
@@ -120,6 +170,7 @@ export function Sidebar() {
       const ws = res.data.data.workspace;
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       setActiveWorkspace(ws);
+      setSidebarSection("groups");
       setCreateWorkspaceModalOpen(false);
       setWsName("");
       toast.success(`Group "${ws.name}" created!`);
@@ -137,6 +188,7 @@ export function Sidebar() {
       const { workspace, inviteCode } = res.data.data;
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       setActiveWorkspace(workspace);
+      setSidebarSection("dms");
       setDmInviteCode(inviteCode);
       toast.success("DM created! Share the code with the other person.");
     },
@@ -196,6 +248,7 @@ export function Sidebar() {
       const ws = res.data.data.workspace;
       queryClient.invalidateQueries({ queryKey: ["workspaces"] });
       setActiveWorkspace(ws);
+      setSidebarSection(ws.type === "DM" ? "dms" : "groups");
       setJoinByCodeModalOpen(false);
       setJoinCode("");
       toast.success(`Joined "${ws.name}"!`);
@@ -227,154 +280,395 @@ export function Sidebar() {
     },
     onError: (err) => toast.error(err?.response?.data?.error?.message ?? "Failed to delete")
   });
-  return <aside
-    className={clsx(
-      "flex h-screen flex-col bg-sidebar border-r border-chat-border transition-all duration-200",
-      sidebarOpen ? "w-80" : "w-0 overflow-hidden"
-    )}
-  >{
-    /* Header */
-  }<div className="flex-shrink-0 border-b border-chat-border p-4"><h1 className="text-lg font-bold text-white tracking-tight">Chats</h1></div>{
-    /* Conversation list */
-  }<div className="flex-1 overflow-y-auto">{
-    /* Groups section */
-  }{groups.length > 0 && <section className="pt-3 pb-1"><div className="flex items-center justify-between px-4 mb-2"><h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                Groups
-              </h3><button
-    onClick={() => setCreateWorkspaceModalOpen(true)}
-    className="text-slate-500 hover:text-white transition-colors"
-    title="Create group"
-  ><PlusIcon className="h-4 w-4" /></button></div><div className="flex flex-col">{groups.map((ws) => <div key={ws.id} className="group relative"><button
-    onClick={() => selectWorkspace(ws)}
-    className={clsx(
-      "flex w-full items-center gap-3 px-4 py-2.5 transition-colors",
-      ws.id === activeWorkspace?.id ? "bg-sidebar-active" : "hover:bg-sidebar-hover"
-    )}
-  ><div className="h-10 w-10 rounded-full bg-brand/20 flex items-center justify-center shrink-0"><UserGroupIcon className="h-5 w-5 text-brand-light" /></div><div className="min-w-0 flex-1 text-left"><p className={clsx(
-    "text-sm font-medium truncate",
-    ws.id === activeWorkspace?.id ? "text-white" : "text-slate-300"
-  )}>{ws.name}</p></div></button>{
-    /* Context menu button */
-  }<button
-    onClick={(e) => {
-      e.stopPropagation();
-      setContextMenuWs(contextMenuWs === ws.id ? null : ws.id);
-    }}
-    className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center rounded p-1 text-slate-500 hover:text-white transition-colors"
-  ><EllipsisVerticalIcon className="h-4 w-4" /></button>{
-    /* Context dropdown */
-  }{contextMenuWs === ws.id && <div className="absolute right-2 top-full z-30 rounded-md bg-chat-surface border border-chat-border shadow-lg py-1 min-w-[160px]"><button
-    onClick={() => {
-      selectWorkspace(ws);
-      setContextMenuWs(null);
-      setInviteCodeOpen(true);
-    }}
-    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-sidebar-hover"
-  ><LinkIcon className="h-4 w-4" /> Share code
-                      </button><button
-    onClick={() => {
-      selectWorkspace(ws);
-      setContextMenuWs(null);
-      setInviteMemberModalOpen(true);
-    }}
-    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-sidebar-hover"
-  ><UserPlusIcon className="h-4 w-4" /> Invite member
-                      </button><button
-    onClick={() => {
-      selectWorkspace(ws);
-      setContextMenuWs(null);
-      setMembersOpen(true);
-    }}
-    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-sidebar-hover"
-  ><UserGroupIcon className="h-4 w-4" /> View members
-                      </button>{ws.ownerId === currentUser?.id && <button
-    onClick={() => {
-      setContextMenuWs(null);
-      setDeleteTargetWs(ws);
-      setDeleteWsConfirmOpen(true);
-    }}
-    className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-sidebar-hover"
-  ><TrashIcon className="h-4 w-4" /> Delete group
-                        </button>}</div>}</div>)}</div></section>}{
-    /* DMs section */
-  }<section className="pt-3 pb-1"><div className="flex items-center justify-between px-4 mb-2"><h3 className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-              Direct Messages
-            </h3><button
-    onClick={() => {
-      setDmInviteCode("");
-      setCreateDmModalOpen(true);
-    }}
-    className="text-slate-500 hover:text-white transition-colors"
-    title="New DM"
-  ><PlusIcon className="h-4 w-4" /></button></div><div className="flex flex-col">{dms.length === 0 ? <p className="px-4 py-2 text-xs text-slate-500">No direct messages yet</p> : dms.map((ws) => {
-    const displayName = getDmDisplayName(ws);
-    const avatarLetter = getDmAvatar(ws);
-    const avatarUrl = getDmAvatarUrl(ws);
-    const isWaiting = ws.members && ws.members.length < 2;
-    return <div key={ws.id} className="group relative"><button
-      onClick={() => selectWorkspace(ws)}
+  return (
+    <aside
       className={clsx(
-        "flex w-full items-center gap-3 px-4 py-2.5 transition-colors",
-        ws.id === activeWorkspace?.id ? "bg-sidebar-active" : "hover:bg-sidebar-hover"
+        "relative flex h-screen flex-col bg-sidebar border-r border-chat-border shrink-0 select-none md:select-auto",
+        !isDragging && "transition-[width] duration-200 ease-out",
+        !sidebarOpen && "overflow-hidden border-r-0"
       )}
-    ><div className="shrink-0"><Avatar
-      name={displayName}
-      src={avatarUrl}
-      size="md"
-    /></div><div className="min-w-0 flex-1 text-left"><p className={clsx(
-      "text-sm font-medium truncate",
-      ws.id === activeWorkspace?.id ? "text-white" : "text-slate-300"
-    )}>{isWaiting ? "Waiting for someone\u2026" : displayName}</p>{isWaiting && <p className="text-xs text-slate-500 truncate">Share the invite code</p>}</div></button>{
-      /* DM context actions */
-    }<button
-      onClick={(e) => {
-        e.stopPropagation();
-        setContextMenuWs(contextMenuWs === ws.id ? null : ws.id);
+      style={{
+        width: sidebarOpen ? `${sidebarWidth}px` : "0px",
+        minWidth: sidebarOpen ? `${sidebarWidth}px` : "0px",
+        maxWidth: sidebarOpen ? `${sidebarWidth}px` : "0px",
       }}
-      className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center rounded p-1 text-slate-500 hover:text-white transition-colors"
-    ><EllipsisVerticalIcon className="h-4 w-4" /></button>{contextMenuWs === ws.id && <div className="absolute right-2 top-full z-30 rounded-md bg-chat-surface border border-chat-border shadow-lg py-1 min-w-[160px]"><button
-      onClick={() => {
-        selectWorkspace(ws);
-        setContextMenuWs(null);
-        setInviteCodeOpen(true);
-      }}
-      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-300 hover:bg-sidebar-hover"
-    ><LinkIcon className="h-4 w-4" /> Share code
-                        </button>{ws.ownerId === currentUser?.id && <button
-      onClick={() => {
-        setContextMenuWs(null);
-        setDeleteTargetWs(ws);
-        setDeleteWsConfirmOpen(true);
-      }}
-      className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-400 hover:bg-sidebar-hover"
-    ><TrashIcon className="h-4 w-4" /> Delete chat
-                          </button>}</div>}</div>;
-  })}</div></section></div>{
-    /* Bottom action bar */
-  }<div className="flex-shrink-0 border-t border-chat-border p-2 flex gap-1"><button
-    onClick={() => setCreateWorkspaceModalOpen(true)}
-    className="flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs text-slate-400 hover:text-white hover:bg-sidebar-hover transition-colors"
-    title="New Group"
-  ><UserGroupIcon className="h-4 w-4" />
-          Group
-        </button><button
-    onClick={() => {
-      setDmInviteCode("");
-      setCreateDmModalOpen(true);
-    }}
-    className="flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs text-slate-400 hover:text-white hover:bg-sidebar-hover transition-colors"
-    title="New DM"
-  ><ChatBubbleLeftRightIcon className="h-4 w-4" />
-          DM
-        </button><button
-    onClick={() => setJoinByCodeModalOpen(true)}
-    className="flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-xs text-slate-400 hover:text-white hover:bg-sidebar-hover transition-colors"
-    title="Join by code"
-  ><ArrowRightEndOnRectangleIcon className="h-4 w-4" />
-          Join
-        </button></div>{
-    /* User info */
-  }<div className="flex-shrink-0 border-t border-chat-border p-3"><UserInfo /></div>{
+    >
+      {/* Draggable resize handle on right border */}
+      {sidebarOpen && (
+        <div
+          onMouseDown={handleMouseDown}
+          onDoubleClick={resetSidebarWidth}
+          className={clsx(
+            "absolute top-0 -right-1.5 w-3 h-full cursor-col-resize z-40 group hidden md:flex items-center justify-center transition-colors",
+            isDragging ? "bg-brand/20" : "hover:bg-brand/10"
+          )}
+          title="Drag to resize sidebar (double-click to reset)"
+          role="separator"
+          aria-orientation="vertical"
+          aria-label="Resize sidebar"
+        >
+          {/* Subtle grab bar indicator */}
+          <div
+            className={clsx(
+              "w-1 rounded-full transition-all duration-150",
+              isDragging
+                ? "h-16 bg-brand shadow-[0_0_10px_rgba(99,102,241,0.8)]"
+                : "h-8 bg-slate-400/40 group-hover:h-12 group-hover:bg-brand"
+            )}
+          />
+        </div>
+      )}
+
+      {/* Header with Chats and Theme Switch spaced across the header */}
+      <div className="flex-shrink-0 border-b border-chat-border px-4 py-3.5 flex items-center justify-between">
+        <h1 className="text-xl font-bold text-slate-900 dark:text-white tracking-tight">Chats</h1>
+        <ThemeSwitch />
+      </div>
+      {/* Conversation list */}
+      <div className="flex-1 overflow-y-auto">
+        {sidebarSection === "groups" ? (
+          /* Groups section */
+          <section className="pt-2 pb-2">
+            <div className="flex items-center justify-between px-4 py-2.5 mb-1 border-b border-chat-border/40">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Groups
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 dark:bg-sidebar-hover text-slate-600 dark:text-slate-300">
+                  {groups.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => setCreateWorkspaceModalOpen(true)}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold text-brand hover:text-white dark:text-brand-light bg-brand/10 hover:bg-brand dark:hover:bg-brand transition-all border border-brand/20 shadow-xs"
+                  title="Create group"
+                >
+                  <PlusIcon className="h-4 w-4 shrink-0" />
+                  <span>Create Group</span>
+                </button>
+              </div>
+            </div>
+
+            {groups.length === 0 ? (
+              <div className="p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-3">
+                  <UserGroupIcon className="h-6 w-6 text-brand" />
+                </div>
+                <p className="text-[15px] font-semibold text-slate-800 dark:text-slate-200 mb-1">No groups yet</p>
+                <p className="text-[13px] text-slate-500 mb-4">Create a team workspace or join an existing one</p>
+                <Button
+                  size="sm"
+                  onClick={() => setCreateWorkspaceModalOpen(true)}
+                  className="inline-flex items-center gap-1.5 text-[13px]"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  <span>Create Group</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                {groups.map((ws) => {
+                  const lastMsg = ws.lastMessage;
+                  const lastMsgTime = formatLastMessageTime(lastMsg?.createdAt);
+                  const lastMsgPreview = lastMsg
+                    ? (lastMsg.senderName ? `${lastMsg.senderName}: ${lastMsg.content}` : lastMsg.content)
+                    : "No messages yet";
+
+                  return (
+                    <div key={ws.id} className="group relative">
+                      <button
+                        onClick={() => selectWorkspace(ws)}
+                        className={clsx(
+                          "flex w-full items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer",
+                          ws.id === activeWorkspace?.id
+                            ? "bg-slate-200/90 dark:bg-sidebar-active text-slate-900 dark:text-white"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover"
+                        )}
+                      >
+                        {/* Group Avatar: custom profile image if present, else fallback icon */}
+                        {ws.avatarUrl ? (
+                          <img
+                            src={ws.avatarUrl}
+                            alt={ws.name}
+                            className="h-10 w-10 rounded-full object-cover shrink-0 border border-slate-200 dark:border-chat-border shadow-xs"
+                          />
+                        ) : (
+                          <div className="h-10 w-10 rounded-full bg-brand/20 flex items-center justify-center shrink-0">
+                            <UserGroupIcon className="h-5 w-5 text-brand-light" />
+                          </div>
+                        )}
+
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="flex items-baseline justify-between gap-2 mb-0.5">
+                            <p className="text-[15px] font-semibold truncate text-slate-900 dark:text-white leading-snug">
+                              {ws.name}
+                            </p>
+                            {lastMsgTime && (
+                              <span className="text-[12px] font-normal text-slate-400 dark:text-slate-500 shrink-0">
+                                {lastMsgTime}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate leading-tight">
+                            {lastMsgPreview}
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* Context menu button */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setContextMenuWs(contextMenuWs === ws.id ? null : ws.id);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center rounded p-1 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors bg-white/90 dark:bg-chat-surface/90 backdrop-blur-xs shadow-xs"
+                        title="Group options"
+                      >
+                        <EllipsisVerticalIcon className="h-4 w-4" />
+                      </button>
+
+                      {/* Context dropdown */}
+                      {contextMenuWs === ws.id && (
+                        <div className="absolute right-2 top-full z-30 rounded-md bg-white dark:bg-chat-surface border border-slate-200 dark:border-chat-border shadow-lg py-1 min-w-[160px]">
+                          <button
+                            onClick={() => {
+                              setEditingGroup(ws);
+                              setContextMenuWs(null);
+                              setEditGroupModalOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                          >
+                            <PencilSquareIcon className="h-4 w-4" /> Edit group
+                          </button>
+                          <button
+                            onClick={() => {
+                              selectWorkspace(ws);
+                              setContextMenuWs(null);
+                              setInviteCodeOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                          >
+                            <LinkIcon className="h-4 w-4" /> Share code
+                          </button>
+                          <button
+                            onClick={() => {
+                              selectWorkspace(ws);
+                              setContextMenuWs(null);
+                              setInviteMemberModalOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                          >
+                            <UserPlusIcon className="h-4 w-4" /> Invite member
+                          </button>
+                          <button
+                            onClick={() => {
+                              selectWorkspace(ws);
+                              setContextMenuWs(null);
+                              setMembersOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                          >
+                            <UserGroupIcon className="h-4 w-4" /> View members
+                          </button>
+                          {ws.ownerId === currentUser?.id && (
+                            <button
+                              onClick={() => {
+                                setContextMenuWs(null);
+                                setDeleteTargetWs(ws);
+                                setDeleteWsConfirmOpen(true);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                            >
+                              <TrashIcon className="h-4 w-4" /> Delete group
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        ) : (
+          /* DMs section */
+          <section className="pt-2 pb-2">
+            <div className="flex items-center justify-between px-4 py-2.5 mb-1 border-b border-chat-border/40">
+              <div className="flex items-center gap-2">
+                <h2 className="text-[13px] font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">
+                  Direct Messages
+                </h2>
+                <span className="px-2 py-0.5 rounded-full text-[11px] font-semibold bg-slate-200 dark:bg-sidebar-hover text-slate-600 dark:text-slate-300">
+                  {dms.length}
+                </span>
+              </div>
+              <div className="flex items-center gap-1.5">
+                <button
+                  onClick={() => {
+                    setDmInviteCode("");
+                    setCreateDmModalOpen(true);
+                  }}
+                  className="flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[13px] font-semibold text-brand hover:text-white dark:text-brand-light bg-brand/10 hover:bg-brand dark:hover:bg-brand transition-all border border-brand/20 shadow-xs"
+                  title="Create DM"
+                >
+                  <PlusIcon className="h-4 w-4 shrink-0" />
+                  <span>Create DM</span>
+                </button>
+              </div>
+            </div>
+
+            {dms.length === 0 ? (
+              <div className="p-6 text-center">
+                <div className="h-12 w-12 rounded-full bg-brand/10 flex items-center justify-center mx-auto mb-3">
+                  <ChatBubbleLeftRightIcon className="h-6 w-6 text-brand" />
+                </div>
+                <p className="text-[15px] font-semibold text-slate-800 dark:text-slate-200 mb-1">No direct messages yet</p>
+                <p className="text-[13px] text-slate-500 mb-4">Start a private 1-on-1 chat with a team member</p>
+                <Button
+                  size="sm"
+                  onClick={() => {
+                    setDmInviteCode("");
+                    setCreateDmModalOpen(true);
+                  }}
+                  className="inline-flex items-center gap-1.5 text-[13px]"
+                >
+                  <PlusIcon className="h-4 w-4" />
+                  <span>Create DM</span>
+                </Button>
+              </div>
+            ) : (
+              <div className="flex flex-col">
+                {dms.map((ws) => {
+                  const displayName = getDmDisplayName(ws);
+                  const avatarUrl = getDmAvatarUrl(ws);
+                  const isWaiting = ws.members && ws.members.length < 2;
+                  const lastMsg = ws.lastMessage;
+                  const lastMsgTime = formatLastMessageTime(lastMsg?.createdAt);
+                  const lastMsgPreview = lastMsg
+                    ? lastMsg.content
+                    : (isWaiting ? "Share the invite code" : "No messages yet");
+
+                  return (
+                    <div key={ws.id} className="group relative">
+                      <button
+                        onClick={() => selectWorkspace(ws)}
+                        className={clsx(
+                          "flex w-full items-center gap-3 px-4 py-2.5 transition-colors cursor-pointer",
+                          ws.id === activeWorkspace?.id
+                            ? "bg-slate-200/90 dark:bg-sidebar-active text-slate-900 dark:text-white"
+                            : "text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover"
+                        )}
+                      >
+                        <div className="shrink-0">
+                          <Avatar name={displayName} src={avatarUrl} size="md" />
+                        </div>
+                        <div className="min-w-0 flex-1 text-left">
+                          <div className="flex items-baseline justify-between gap-2 mb-0.5">
+                            <p className="text-[15px] font-semibold truncate text-slate-900 dark:text-white leading-snug">
+                              {isWaiting ? "Waiting for someone…" : displayName}
+                            </p>
+                            {lastMsgTime && (
+                              <span className="text-[12px] font-normal text-slate-400 dark:text-slate-500 shrink-0">
+                                {lastMsgTime}
+                              </span>
+                            )}
+                          </div>
+                          <p className="text-[13px] text-slate-500 dark:text-slate-400 truncate leading-tight">
+                            {lastMsgPreview}
+                          </p>
+                        </div>
+                      </button>
+
+                      {/* DM context actions */}
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          setContextMenuWs(contextMenuWs === ws.id ? null : ws.id);
+                        }}
+                        className="absolute right-2 top-1/2 -translate-y-1/2 hidden group-hover:flex items-center justify-center rounded p-1 text-slate-500 hover:text-slate-900 dark:hover:text-white transition-colors bg-white/90 dark:bg-chat-surface/90 backdrop-blur-xs shadow-xs"
+                        title="Chat options"
+                      >
+                        <EllipsisVerticalIcon className="h-4 w-4" />
+                      </button>
+
+                      {contextMenuWs === ws.id && (
+                        <div className="absolute right-2 top-full z-30 rounded-md bg-white dark:bg-chat-surface border border-slate-200 dark:border-chat-border shadow-lg py-1 min-w-[160px]">
+                          <button
+                            onClick={() => {
+                              selectWorkspace(ws);
+                              setContextMenuWs(null);
+                              setInviteCodeOpen(true);
+                            }}
+                            className="flex w-full items-center gap-2 px-3 py-2 text-sm text-slate-700 dark:text-slate-300 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                          >
+                            <LinkIcon className="h-4 w-4" /> Share code
+                          </button>
+                          {ws.ownerId === currentUser?.id && (
+                            <button
+                              onClick={() => {
+                                setContextMenuWs(null);
+                                setDeleteTargetWs(ws);
+                                setDeleteWsConfirmOpen(true);
+                              }}
+                              className="flex w-full items-center gap-2 px-3 py-2 text-sm text-red-500 hover:bg-slate-100 dark:hover:bg-sidebar-hover cursor-pointer"
+                            >
+                              <TrashIcon className="h-4 w-4" /> Delete chat
+                            </button>
+                          )}
+                        </div>
+                      )}
+                    </div>
+                  );
+                })}
+              </div>
+            )}
+          </section>
+        )}
+      </div>
+
+      {/* Bottom action bar */}
+      <div className="flex-shrink-0 border-t border-chat-border p-2 flex gap-1.5 bg-sidebar">
+        <button
+          onClick={() => setSidebarSection("groups")}
+          className={clsx(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-[14px] transition-all duration-150",
+            sidebarSection === "groups"
+              ? "bg-brand/15 text-brand dark:text-brand-light font-semibold shadow-xs border border-brand/30"
+              : "font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-sidebar-hover"
+          )}
+          title="View Groups"
+        >
+          <UserGroupIcon className="h-5 w-5 shrink-0" />
+          <span>Group</span>
+        </button>
+
+        <button
+          onClick={() => setSidebarSection("dms")}
+          className={clsx(
+            "flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-[14px] transition-all duration-150",
+            sidebarSection === "dms"
+              ? "bg-brand/15 text-brand dark:text-brand-light font-semibold shadow-xs border border-brand/30"
+              : "font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-sidebar-hover"
+          )}
+          title="View Direct Messages"
+        >
+          <ChatBubbleLeftRightIcon className="h-5 w-5 shrink-0" />
+          <span>DM</span>
+        </button>
+
+        <button
+          onClick={() => setJoinByCodeModalOpen(true)}
+          className="flex-1 flex items-center justify-center gap-2 rounded-lg py-2.5 px-3 text-[14px] font-medium text-slate-600 dark:text-slate-400 hover:text-slate-900 dark:hover:text-white hover:bg-slate-100 dark:hover:bg-sidebar-hover transition-colors"
+          title="Join by invite code"
+        >
+          <ArrowRightEndOnRectangleIcon className="h-5 w-5 shrink-0" />
+          <span>Join</span>
+        </button>
+      </div>
+
+      {/* User info */}
+      <div className="flex-shrink-0 border-t border-chat-border p-3"><UserInfo /></div>{
     /* ═══════════ MODALS ═══════════ */
   }{
     /* Create group modal */
@@ -496,5 +790,17 @@ export function Sidebar() {
     loading={deleteWsMutation.isPending}
   >
             Delete
-          </Button></div></Modal></aside>;
+          </Button></div></Modal>
+
+      {/* Edit group modal */}
+      <EditGroupModal
+        open={editGroupModalOpen}
+        onClose={() => {
+          setEditGroupModalOpen(false);
+          setEditingGroup(null);
+        }}
+        workspace={editingGroup}
+      />
+    </aside>
+  );
 }

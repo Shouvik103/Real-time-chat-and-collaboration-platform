@@ -2,8 +2,8 @@ import { clsx } from "clsx";
 import { Spinner } from "./Spinner";
 const variantClasses = {
   primary: "bg-brand hover:bg-brand-hover text-white focus-visible:ring-brand",
-  secondary: "bg-chat-surface hover:bg-sidebar-hover text-white border border-chat-border focus-visible:ring-slate-400",
-  ghost: "bg-transparent hover:bg-sidebar-hover text-slate-300 hover:text-white focus-visible:ring-slate-400",
+  secondary: "bg-chat-surface hover:bg-slate-100 dark:hover:bg-sidebar-hover text-slate-800 dark:text-white border border-chat-border focus-visible:ring-slate-400",
+  ghost: "bg-transparent hover:bg-slate-100 dark:hover:bg-sidebar-hover text-slate-600 dark:text-slate-300 hover:text-slate-900 dark:hover:text-white focus-visible:ring-slate-400",
   danger: "bg-red-600 hover:bg-red-700 text-white focus-visible:ring-red-500"
 };
 const sizeClasses = {

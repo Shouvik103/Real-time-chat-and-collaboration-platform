@@ -39,9 +39,9 @@ export function Modal({ open, onClose, title, children, className }) {
         "p-6",
         className
       )}
-    ><div className="flex items-center justify-between mb-5"><h2 id="modal-title" className="text-lg font-semibold text-white">{title}</h2><button
+    ><div className="flex items-center justify-between mb-5"><h2 id="modal-title" className="text-lg font-semibold text-slate-900 dark:text-white">{title}</h2><button
       onClick={onClose}
-      className="text-slate-400 hover:text-white transition-colors"
+      className="text-slate-400 hover:text-slate-900 dark:hover:text-white transition-colors"
       aria-label="Close modal"
     ><XMarkIcon className="h-5 w-5" /></button></div>{children}</div></div>,
     document.body

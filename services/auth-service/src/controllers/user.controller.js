@@ -7,6 +7,8 @@ const { v4: uuidv4 } = require('uuid');
 const { sendSuccess, sendError } = require('../utils/apiResponse');
 const { AppError } = require('../utils/appError');
 const { logger } = require('../utils/logger');
+const { Message } = require('../models/message.model');
+const { decrypt } = require('../services/encryption.service');
 
 const prisma = new PrismaClient();
 
@@ -125,6 +127,9 @@ const getWorkspaces = async (req, res, next) => {
             include: {
                 workspace: {
                     include: {
+                        channels: {
+                            select: { id: true, name: true, type: true },
+                        },
                         members: {
                             include: {
                                 user: {
@@ -142,20 +147,122 @@ const getWorkspaces = async (req, res, next) => {
             },
         });
 
-        const workspaces = memberships.map((m) => {
-            const ws = m.workspace;
-            return {
-                ...ws,
-                members: (ws.members || []).map((mem) => ({
+        const workspaces = await Promise.all(
+            memberships.map(async (m) => {
+                const ws = m.workspace;
+                const channelIds = (ws.channels || []).map((c) => c.id);
+
+                let lastMessage = null;
+                if (channelIds.length > 0) {
+                    try {
+                        const latestDoc = await Message.findOne({
+                            channelId: { $in: channelIds },
+                            deleted: false,
+                        })
+                            .sort({ _id: -1 })
+                            .lean();
+
+                        if (latestDoc) {
+                            let decryptedContent = latestDoc.content;
+                            try {
+                                decryptedContent = await decrypt(latestDoc.content);
+                            } catch (decErr) {
+                                // fallback to raw content if decryption error
+                            }
+
+                            lastMessage = {
+                                id: latestDoc._id.toString(),
+                                channelId: latestDoc.channelId,
+                                senderId: latestDoc.senderId,
+                                senderName: latestDoc.senderName,
+                                content: decryptedContent,
+                                createdAt: latestDoc.createdAt || latestDoc.created_at || new Date().toISOString(),
+                            };
+                        }
+                    } catch (msgErr) {
+                        logger.warn(`Failed to fetch last message for workspace ${ws.id}: ${msgErr.message}`);
+                    }
+                }
+
+                return {
+                    ...ws,
+                    lastMessage,
+                    members: (ws.members || []).map((mem) => ({
+                        id: mem.user.id,
+                        displayName: mem.user.displayName,
+                        avatarUrl: mem.user.avatarUrl,
+                        email: mem.user.email,
+                        role: mem.role,
+                    })),
+                };
+            }),
+        );
+
+        sendSuccess(res, { workspaces });
+    } catch (err) {
+        next(err);
+    }
+};
+
+// ═══════════════════════════════════════════════════════════════════════════
+// PATCH /workspaces/:workspaceId — update workspace name and/or avatarUrl
+// ═══════════════════════════════════════════════════════════════════════════
+
+const updateWorkspace = async (req, res, next) => {
+    try {
+        const userId = req.user.id;
+        const { workspaceId } = req.params;
+        const { name, avatarUrl } = req.body;
+
+        const membership = await prisma.workspaceMember.findUnique({
+            where: { userId_workspaceId: { userId, workspaceId } },
+        });
+
+        if (!membership || !['OWNER', 'ADMIN'].includes(membership.role)) {
+            sendError(res, 'FORBIDDEN', 'Only workspace owners and admins can update group details', 403);
+            return;
+        }
+
+        const data = {};
+        if (name !== undefined) data.name = name.trim();
+        if (avatarUrl !== undefined) data.avatarUrl = avatarUrl;
+
+        const updated = await prisma.workspace.update({
+            where: { id: workspaceId },
+            data,
+            include: {
+                channels: {
+                    select: { id: true, name: true, type: true },
+                },
+                members: {
+                    include: {
+                        user: {
+                            select: {
+                                id: true,
+                                displayName: true,
+                                avatarUrl: true,
+                                email: true,
+                            },
+                        },
+                    },
+                },
+            },
+        });
+
+        logger.info(`Workspace updated: ${workspaceId} by user ${userId}`);
+
+        sendSuccess(res, {
+            workspace: {
+                ...updated,
+                members: (updated.members || []).map((mem) => ({
                     id: mem.user.id,
                     displayName: mem.user.displayName,
                     avatarUrl: mem.user.avatarUrl,
                     email: mem.user.email,
                     role: mem.role,
                 })),
-            };
+            },
         });
-        sendSuccess(res, { workspaces });
     } catch (err) {
         next(err);
     }
@@ -630,6 +737,7 @@ module.exports = {
     uploadAvatar,
     getWorkspaces,
     createWorkspace,
+    updateWorkspace,
     deleteWorkspace,
     getChannels,
     createChannel,

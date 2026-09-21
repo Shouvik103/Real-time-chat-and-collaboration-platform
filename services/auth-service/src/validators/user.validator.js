@@ -74,6 +74,34 @@ const createWorkspaceSchema = z.object({
 });
 
 /**
+ * PATCH /workspaces/:workspaceId — update workspace name and/or avatarUrl
+ */
+const updateWorkspaceSchema = z.object({
+    params: z.object({
+        workspaceId: z.string().uuid('Invalid workspace ID'),
+    }),
+    body: z.object({
+        name: z
+            .string()
+            .min(2, 'Workspace name must be at least 2 characters')
+            .max(80, 'Workspace name must be at most 80 characters')
+            .trim()
+            .optional(),
+        avatarUrl: z
+            .string()
+            .refine(
+                (val) => val.startsWith('data:image/') || /^https?:\/\//.test(val) || val === '' || val === null,
+                'Avatar must be a valid URL or image',
+            )
+            .nullable()
+            .optional(),
+    }).refine(
+        (data) => Object.keys(data).length > 0,
+        { message: 'At least one field must be provided to update' },
+    ),
+});
+
+/**
  * GET /workspaces/:workspaceId/channels — workspace param only
  */
 const workspaceParamSchema = z.object({
@@ -163,6 +191,7 @@ module.exports = {
     getProfileSchema,
     uploadAvatarSchema,
     createWorkspaceSchema,
+    updateWorkspaceSchema,
     workspaceParamSchema,
     createChannelSchema,
     inviteMemberSchema,

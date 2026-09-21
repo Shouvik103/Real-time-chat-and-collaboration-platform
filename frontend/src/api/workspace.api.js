@@ -2,6 +2,7 @@ import api from "./axios";
 export const workspaceApi = {
   getWorkspaces: () => api.get("/api/users/workspaces"),
   createWorkspace: (name) => api.post("/api/users/workspaces", { name }),
+  updateWorkspace: (workspaceId, data) => api.patch(`/api/users/workspaces/${workspaceId}`, data),
   createDm: () => api.post("/api/users/workspaces/dm"),
   deleteWorkspace: (workspaceId) => api.delete(`/api/users/workspaces/${workspaceId}`),
   getChannels: (workspaceId) => api.get(

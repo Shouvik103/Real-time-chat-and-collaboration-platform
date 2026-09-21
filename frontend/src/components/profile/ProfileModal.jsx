@@ -133,7 +133,7 @@ export function ProfileModal() {
     onChange={(e) => setDescription(e.target.value)}
     rows={3}
     placeholder="Tell us a little about yourself..."
-    className="w-full rounded-lg border border-chat-border bg-chat-surface px-4 py-2.5 text-sm text-white placeholder-slate-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors resize-none"
+    className="w-full rounded-lg border border-chat-border bg-chat-surface px-4 py-2.5 text-sm text-slate-900 dark:text-white placeholder-slate-400 dark:placeholder-slate-500 focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors resize-none"
   /></div>{
     /* Email is read-only for now */
   }<div><label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
@@ -149,13 +149,13 @@ export function ProfileModal() {
     type="date"
     value={dob}
     onChange={(e) => setDob(e.target.value)}
-    className="w-full rounded-lg border border-chat-border bg-chat-surface px-4 py-2.5 text-sm text-white focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors"
+    className="w-full rounded-lg border border-chat-border bg-chat-surface px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors"
   /></div><div><label className="block text-xs font-semibold uppercase tracking-wider text-slate-400 mb-1.5">
               Gender
             </label><select
     value={gender}
     onChange={(e) => setGender(e.target.value)}
-    className="w-full rounded-lg border border-chat-border bg-chat-surface px-4 py-2.5 text-sm text-white focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors appearance-none"
+    className="w-full rounded-lg border border-chat-border bg-chat-surface px-4 py-2.5 text-sm text-slate-900 dark:text-white focus:border-brand focus:outline-none focus:ring-1 focus:ring-brand transition-colors appearance-none"
   ><option value="" disabled className="text-slate-500">Select gender</option><option value="Male">Male</option><option value="Female">Female</option><option value="Others">Others</option></select></div></div><div className="flex justify-end gap-2 pt-2"><Button variant="ghost" type="button" onClick={() => setOpen(false)}>
             Cancel
           </Button><Button type="submit" loading={updateMutation.isPending}>
