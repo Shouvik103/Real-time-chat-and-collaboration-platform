@@ -1,5 +1,5 @@
 import React from "react";
-import bgImage from "@/assets/ChatGPT Image Sep 20, 2026, 02_23_27 AM.png";
+import bgImage from "@/assets/background.png";
 import "./SunsetBackground.css";
 
 export function SunsetBackground({ children }) {
