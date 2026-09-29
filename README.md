@@ -9,7 +9,7 @@
 
   <p align="center">
     <a href="https://instalk.shouvik.tech" target="_blank">
-      <img src="https://img.shields.io/badge/🚀_Live_Demo-instalk.shouvik.tech-00C853?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
+      <img src="https://img.shields.io/badge/Live_Demo-instalk.shouvik.tech-00C853?style=for-the-badge&logo=vercel&logoColor=white" alt="Live Demo" />
     </a>
     <a href="LICENSE">
       <img src="https://img.shields.io/badge/License-MIT-0969DA?style=for-the-badge" alt="License" />
@@ -30,20 +30,20 @@
   </p>
 
   <p align="center">
-    <a href="#-key-features">Key Features</a> •
-    <a href="#-architecture--system-design">Architecture</a> •
-    <a href="#-polyglot-persistence-layer">Data Layer</a> •
-    <a href="#-c-encryption-engine--security">Security Engine</a> •
-    <a href="#-live-demo--test-accounts">Demo Accounts</a> •
-    <a href="#-technology-stack">Tech Stack</a> •
-    <a href="#-license">License</a>
+    <a href="#key-features">Key Features</a> •
+    <a href="#architecture--system-design">Architecture</a> •
+    <a href="#polyglot-persistence-layer">Data Layer</a> •
+    <a href="#c-encryption-engine--security">Security Engine</a> •
+    <a href="#live-demo--test-accounts">Demo Accounts</a> •
+    <a href="#technology-stack">Tech Stack</a> •
+    <a href="#license">License</a>
   </p>
 
 </div>
 
 ---
 
-## 📌 Overview
+## Overview
 
 **InsTalk** is a production-deployed, cloud-native real-time communication platform designed to balance ultra-low latency messaging with cryptographic data security. 
 
@@ -51,37 +51,37 @@ Unlike traditional monolith chat apps that perform CPU-intensive encryption dire
 
 ---
 
-## ✨ Key Features
+## Key Features
 
-### ⚡ Ultra-Low Latency Messaging
+### Ultra-Low Latency Messaging
 * **Bi-directional WebSockets** — Event-driven duplex communication powered by Socket.IO with sub-50ms round-trip delivery.
 * **Typing Indicators & Live Presence** — Real-time user typing status and heartbeat presence tracking (Online, Away, Offline) via distributed Redis key expiration.
 * **Interactive Emoji Reactions** — Instant, optimistic message reactions synced across channel subscribers in real time.
 * **Message Lifecycle Management** — Real-time message editing, optimistic UI updates, and soft-deletion tombstoning.
 
-### 🔐 Bare-Metal Cryptographic Engine
+### Bare-Metal Cryptographic Engine
 * **gRPC C++ Encryption Microservice** — Native C++17 microservice handling **AES-256-GCM** authenticated encryption with **LZ4** high-speed compression over port `50051`.
 * **Zero Plaintext at Rest** — All chat payloads stored in MongoDB are encrypted with cryptographically secure 12-byte initialization vectors (IVs) and 16-byte authentication tags.
 * **AEAD Tamper Protection** — Any unauthorized alteration to stored ciphertexts triggers instant authentication failure during decryption.
 
-### 🏢 Multi-Tenant Workspaces & Channels
+### Multi-Tenant Workspaces & Channels
 * **Hierarchical Organization** — Create and manage distinct workspaces, public channels, private invitation-only channels, and 1-on-1 direct messages (DMs).
 * **Role-Based Access Control** — Granular permissions across Workspace Owners, Admins, and Members.
 * **Instant Invite Engine** — Secure, shareable workspace invitation codes for team onboarding.
 
-### 🛡️ Enterprise Security & Authentication
+### Enterprise Security & Authentication
 * **Dual-Token Rotation** — Secure HTTP-only cookies containing short-lived JWT access tokens and rotating refresh tokens.
 * **Multi-Provider Auth** — Native email/password authentication (salted bcrypt hashing) alongside **Google OAuth 2.0**.
 * **Defense in Depth** — Rate limiting via `express-rate-limit`, strict HTTP security headers via `helmet`, and CORS origin validation.
 
-### 🎨 Modern Dark Glassmorphic UI
+### Modern Dark Glassmorphic UI
 * **Responsive Interface** — Tailored dark theme crafted with React 18, Tailwind CSS, and Lucide / Heroicons.
 * **Ambient Canvas Effects** — Custom interactive particle canvas background with physics-based mouse repelling.
 * **State Management** — Synchronized UI state powered by **Zustand** and cache-driven data queries via **TanStack React Query**.
 
 ---
 
-## 🏗️ Architecture & System Design
+## Architecture & System Design
 
 InsTalk employs a distributed, cloud-native topology separating static edge delivery from stateful backend services and isolated computational microservices.
 
@@ -137,7 +137,7 @@ Databases (Dockerized on AWS EC2):
 
 ---
 
-## 🗄️ Polyglot Persistence Layer
+## Polyglot Persistence Layer
 
 InsTalk avoids single-database bottlenecks by delegating operational responsibilities according to data access patterns and durability requirements:
 
@@ -162,7 +162,7 @@ InsTalk avoids single-database bottlenecks by delegating operational responsibil
 
 ---
 
-## 🔐 C++ Encryption Engine & Security
+## C++ Encryption Engine & Security
 
 A foundational technical differentiator of InsTalk is its dedicated cryptographic microservice written in **C++17**, exposing a low-latency **gRPC** interface to the Node.js application layer.
 
@@ -220,10 +220,10 @@ message DecryptResponse {
 
 ---
 
-## 🌐 Live Demo & Test Accounts
+## Live Demo & Test Accounts
 
 The platform is running live in production at:  
-👉 **[https://instalk.shouvik.tech](https://instalk.shouvik.tech)**
+**Live Deployment**: [https://instalk.shouvik.tech](https://instalk.shouvik.tech)
 
 To evaluate real-time multi-user synchronization, open two separate browser windows (or one Incognito window) and sign in using the pre-seeded accounts below:
 
@@ -237,7 +237,7 @@ To evaluate real-time multi-user synchronization, open two separate browser wind
 
 ---
 
-## 💻 Technology Stack
+## Technology Stack
 
 <div align="center">
 
@@ -253,8 +253,6 @@ To evaluate real-time multi-user synchronization, open two separate browser wind
 
 ---
 
-## 📄 License
+## License
 
 This project is licensed under the [MIT License](LICENSE) — see the LICENSE file for details.
-
----
