@@ -258,7 +258,3 @@ To evaluate real-time multi-user synchronization, open two separate browser wind
 This project is licensed under the [MIT License](LICENSE) — see the LICENSE file for details.
 
 ---
-
-<div align="center">
-  <sub>Built with care by <a href="https://github.com/Shouvik103">Shouvik Das</a> • Deployed live at <a href="https://instalk.shouvik.tech">instalk.shouvik.tech</a></sub>
-</div>
